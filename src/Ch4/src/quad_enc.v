@@ -1,11 +1,11 @@
-
-
-module quad_enc (
+module quad_enc #(
+    parameter COUNTER_WIDTH = 16
+) (
     input wire clk,
     input wire reset,
     input wire channel_a,
     input wire channel_b,
-    output reg signed [15:0] counter
+    output reg signed [COUNTER_WIDTH-1:0] counter
 );
 
     reg prev_a;
@@ -15,7 +15,7 @@ module quad_enc (
         if (reset) begin
             prev_a <= 1'b0;
             prev_b <= 1'b0;
-            counter <= 16'sd0;
+            counter <= {COUNTER_WIDTH{1'b0}};
         end else begin
             prev_a <= channel_a;
             prev_b <= channel_b;
