@@ -1,15 +1,19 @@
 `timescale 1ns/1ps
 
 module quad_enc_tb;
+
+    // Define a variable COUNTER_WIDTH
+    parameter COUNTER_WIDTH = 16;
+
     reg clk;
     reg reset;
     reg channel_a;
     reg channel_b;
-    wire signed [15:0] counter;
+    wire signed [COUNTER_WIDTH-1:0] counter;
     integer i;
 
-    // Instantiate UUT
-    quad_enc uut (
+    // Instantiate UUT with parameter override
+    quad_enc #(.COUNTER_WIDTH(COUNTER_WIDTH)) uut (
         .clk(clk),
         .reset(reset),
         .channel_a(channel_a),
@@ -24,7 +28,6 @@ module quad_enc_tb;
     end
 
     initial begin
-
         $dumpfile("signals.vcd"); // Name of the signal dump file
         $dumpvars(0, quad_enc_tb); 
         // Initialize
@@ -35,24 +38,20 @@ module quad_enc_tb;
         reset = 0;
         #10;
 
-        $display("Starting forward rotation tests");
-        for (i = 0; i < 5; i = i + 1) begin
-            $display("Forward loop %0d", i);
-            {channel_a, channel_b} = 2'b00; #10 $display("AB=00, counter=%0d", counter);
-            {channel_a, channel_b} = 2'b01; #10 $display("AB=01, counter=%0d", counter);
-            {channel_a, channel_b} = 2'b11; #10 $display("AB=11, counter=%0d", counter);
-            {channel_a, channel_b} = 2'b10; #10 $display("AB=10, counter=%0d", counter);
-            {channel_a, channel_b} = 2'b00; #10 $display("AB=00, counter=%0d", counter);
+        for (i = 0; i < 2; i = i + 1) begin
+            {channel_a, channel_b} = 2'b00; #10 
+            {channel_a, channel_b} = 2'b01; #10
+            {channel_a, channel_b} = 2'b11; #10
+            {channel_a, channel_b} = 2'b10; #10 
+            {channel_a, channel_b} = 2'b00; #10 
         end
 
-        $display("Starting reverse rotation tests");
-        for (i = 0; i < 5; i = i + 1) begin
-            $display("Reverse loop %0d", i);
-            {channel_a, channel_b} = 2'b00; #10 $display("AB=00, counter=%0d", counter);
-            {channel_a, channel_b} = 2'b10; #10 $display("AB=10, counter=%0d", counter);
-            {channel_a, channel_b} = 2'b11; #10 $display("AB=11, counter=%0d", counter);
-            {channel_a, channel_b} = 2'b01; #10 $display("AB=01, counter=%0d", counter);
-            {channel_a, channel_b} = 2'b00; #10 $display("AB=00, counter=%0d", counter);
+        for (i = 0; i < 2; i = i + 1) begin
+            {channel_a, channel_b} = 2'b00; #10
+            {channel_a, channel_b} = 2'b10; #10 
+            {channel_a, channel_b} = 2'b11; #10
+            {channel_a, channel_b} = 2'b01; #10 
+            {channel_a, channel_b} = 2'b00; #10 
         end
 
         #10;
