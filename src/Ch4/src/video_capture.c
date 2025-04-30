@@ -50,12 +50,30 @@ on_keyboard (GIOChannel   *source,
   return FALSE;
 }
 
+// Callback for new samples from appsink
+static GstFlowReturn
+on_new_sample(GSTAppSink *sink, gpointer user_data) {
+    GstSample *sample = gst_app_sink_pull_sample(sink);
+    if (sample)
+        reutn GST_FLOW_ERROR;
+    
+    GstBuffer *buffer = gst_sample_get_buffer(sample);
+    GstMaopInfo info;
+    gst_buffer_map(buffer, &info, GST_MAP_READ);
+
+    // Process raw YUV data at info.data, length info.size
+    gst_buffer_unmap(buffer, &info);
+    gst_sample_unref(sample);
+    return GST_FLOW_OK;
+}
+
 int
 main (int   argc,
       char *argv[])
 {
   GMainLoop *loop;
-  GstElement *pipeline, *src, *enc, *capfilter, *dec, *sink;
+  GstElement *pipeline, *src, *enc, *capfilter, *dec, *tee;
+  GstElement *queue_file, *queue_app, *app_sink;
   GstBus *bus;
   guint bus_watch_id;
   gchar filename[256];
@@ -88,9 +106,12 @@ main (int   argc,
   enc      = gst_element_factory_make ("jpegenc",        "encoder");
   capfilter= gst_element_factory_make ("capsfilter",     "filter");
   dec      = gst_element_factory_make ("jpegdec",        "decoder");
-  sink     = gst_element_factory_make ("filesink",       "sink");
+  tee      = gst_element_factory_make ("tee",           "tee");
+  queue_file = gst_element_factory_make ("queue",        "queue_file");
+  queue_app  = gst_element_factory_make ("queue",        "queue_app");
+  app_sink   = gst_element_factory_make ("appsink",      "app_sink");
 
-  if (!pipeline || !src || !enc || !capfilter || !dec || !sink) {
+  if (!pipeline || !src || !enc || !capfilter || !dec || !tee || !queue_file || !queue_app || !app_sink) {
     g_printerr ("Failed to create GStreamer elements.\n");
     return -1;
   }
@@ -100,15 +121,34 @@ main (int   argc,
   caps = gst_caps_from_string ("image/jpeg,width=320,height=240,framerate=30/1");
   g_object_set (G_OBJECT (capfilter), "caps", caps, NULL);
   gst_caps_unref (caps);
-  g_object_set (G_OBJECT (sink), "location", filepath, NULL);
+  
+  // Conigure the app sink
+  g_object_set (app_sink,
+    "emit-signals", TRUE,
+    "sync", FALSE,
+    "max-buffers", 1
+    "drop", TRUE,
+    NULL);
+
+  if (!gst_element_link_many(src, enc, capfilter, dec, tee, NULL) ||
+    !gst_element_link_many(tee, queue_file, queue_app, app_sink, NULL)) {
+    g_printerr("Failed to link pipeline elements.\n");
+    gst_object_unref(pipeline);
+    return -1;
+  }
 
   // Build the pipeline: src -> jpegenc -> capsfilter -> jpegdec -> filesink
-  gst_bin_add_many (GST_BIN (pipeline), src, enc, capfilter, dec, sink, NULL);
-  if (!gst_element_link_many (src, enc, capfilter, dec, sink, NULL)) {
+  gst_bin_add_many (GST_BIN (pipeline), src, enc, capfilter, dec, tee,
+  queue_file, queue_app, app_sink NULL);
+  if (!gst_element_link_many (src, enc, capfilter, dec, tee, NULL) ||
+      !gst_element_link_many (tee, queue_file, queue_app, app_sink, NULL)) {
     g_printerr ("Failed to link elements in the pipeline.\n");
     gst_object_unref (pipeline);
     return -1;
   }
+
+  // Attach appsink callback
+  g_signal_connect(app_sink, "new-sample", G_CALLBACK(on_new_sample), NULL);
 
   // Create the main loop
   loop = g_main_loop_new (NULL, FALSE);
