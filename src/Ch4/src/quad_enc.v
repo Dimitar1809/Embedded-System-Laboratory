@@ -5,7 +5,7 @@ module quad_enc #(
     input wire reset,
     input wire channel_a,
     input wire channel_b,
-    output reg signed [COUNTER_WIDTH-1:0] counter
+    output reg unsigned [COUNTER_WIDTH-1:0] counter
 );
 
     reg prev_a;
@@ -13,20 +13,23 @@ module quad_enc #(
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            prev_a <= 1'b0;
-            prev_b <= 1'b0;
+            prev_a  <= 1'b0;
+            prev_b  <= 1'b0;
             counter <= {COUNTER_WIDTH{1'b0}};
         end else begin
+            // build a 4‑bit word from last and current AB
+            case ({prev_a, prev_b, channel_a, channel_b})
+                // forward: 00→01→11→10→00
+                4'b0001, 4'b0111, 4'b1110, 4'b1000:
+                    counter <= counter + 1;
+                // reverse: 00→10→11→01→00
+                4'b0010, 4'b0100, 4'b1101, 4'b1011:
+                    counter <= counter - 1;
+                default: ;
+            endcase
+
             prev_a <= channel_a;
             prev_b <= channel_b;
-
-            if ({channel_a, channel_b} != {prev_a, prev_b}) begin
-                if (prev_a ^ channel_b) begin
-                     counter <= counter + 1;
-                end else if (prev_b ^ channel_a) begin
-                     counter <= counter - 1;
-                end
-            end
         end
     end
 

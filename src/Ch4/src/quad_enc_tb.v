@@ -39,19 +39,19 @@ module quad_enc_tb;
         #10;
 
         for (i = 0; i < 2; i = i + 1) begin
-            {channel_a, channel_b} = 2'b00; #10 
-            {channel_a, channel_b} = 2'b01; #10
-            {channel_a, channel_b} = 2'b11; #10
-            {channel_a, channel_b} = 2'b10; #10 
-            {channel_a, channel_b} = 2'b00; #10 
+            {channel_a, channel_b} = 2'b00; #10; 
+            {channel_a, channel_b} = 2'b01; #10;
+            {channel_a, channel_b} = 2'b11; #10;
+            {channel_a, channel_b} = 2'b10; #10;
+            {channel_a, channel_b} = 2'b00; #10;
         end
 
         for (i = 0; i < 2; i = i + 1) begin
-            {channel_a, channel_b} = 2'b00; #10
-            {channel_a, channel_b} = 2'b10; #10 
-            {channel_a, channel_b} = 2'b11; #10
-            {channel_a, channel_b} = 2'b01; #10 
-            {channel_a, channel_b} = 2'b00; #10 
+            {channel_a, channel_b} = 2'b00; #10;
+            {channel_a, channel_b} = 2'b10; #10; 
+            {channel_a, channel_b} = 2'b11; #10;
+            {channel_a, channel_b} = 2'b01; #10; 
+            {channel_a, channel_b} = 2'b00; #10; 
         end
 
         #10;

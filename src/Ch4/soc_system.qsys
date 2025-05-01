@@ -22,14 +22,6 @@
          type = "boolean";
       }
    }
-   element esl_bus_demo_0
-   {
-      datum _sortIndex
-      {
-         value = "2";
-         type = "int";
-      }
-   }
    element hps_0
    {
       datum _sortIndex
@@ -43,19 +35,11 @@
          type = "boolean";
       }
    }
-   element quad_enc_0
+   element quad_comm_0
    {
       datum _sortIndex
       {
-         value = "3";
-         type = "int";
-      }
-   }
-   element quad_enc_1
-   {
-      datum _sortIndex
-      {
-         value = "4";
+         value = "2";
          type = "int";
       }
    }
@@ -81,11 +65,6 @@
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk" internal="clk_0.clk_in" type="clock" dir="end" />
- <interface
-   name="esl_demo"
-   internal="esl_bus_demo_0.user_interface"
-   type="conduit"
-   dir="end" />
  <interface name="hps_0_f2h_cold_reset_req" internal="hps_0.f2h_cold_reset_req" />
  <interface name="hps_0_f2h_debug_reset_req" internal="hps_0.f2h_debug_reset_req" />
  <interface name="hps_0_f2h_stm_hw_events" internal="hps_0.f2h_stm_hw_events" />
@@ -99,33 +78,28 @@
  <interface name="hps_0_hps_io" internal="hps_0.hps_io" />
  <interface name="memory" internal="hps_0.memory" type="conduit" dir="end" />
  <interface
-   name="quad_enc_0_channel_a"
-   internal="quad_enc_0.channel_a"
+   name="quad_comm_0_pitch_channel_a"
+   internal="quad_comm_0.pitch_channel_a"
    type="conduit"
    dir="end" />
  <interface
-   name="quad_enc_0_channel_b"
-   internal="quad_enc_0.channel_b"
+   name="quad_comm_0_pitch_channel_b"
+   internal="quad_comm_0.pitch_channel_b"
    type="conduit"
    dir="end" />
  <interface
-   name="quad_enc_0_counter"
-   internal="quad_enc_0.counter"
+   name="quad_comm_0_slave"
+   internal="quad_comm_0.slave"
+   type="avalon"
+   dir="end" />
+ <interface
+   name="quad_comm_0_yaw_channel_a"
+   internal="quad_comm_0.yaw_channel_a"
    type="conduit"
    dir="end" />
  <interface
-   name="quad_enc_1_channel_a"
-   internal="quad_enc_1.channel_a"
-   type="conduit"
-   dir="end" />
- <interface
-   name="quad_enc_1_channel_b"
-   internal="quad_enc_1.channel_b"
-   type="conduit"
-   dir="end" />
- <interface
-   name="quad_enc_1_counter"
-   internal="quad_enc_1.counter"
+   name="quad_comm_0_yaw_channel_b"
+   internal="quad_comm_0.yaw_channel_b"
    type="conduit"
    dir="end" />
  <interface name="reset" internal="clk_0.clk_in_reset" type="reset" dir="end" />
@@ -134,12 +108,6 @@
   <parameter name="clockFrequencyKnown" value="true" />
   <parameter name="inputClockFrequency" value="0" />
   <parameter name="resetSynchronousEdges" value="NONE" />
- </module>
- <module name="esl_bus_demo_0" kind="esl_bus_demo" version="1.0" enabled="1">
-  <parameter name="AUTO_CLOCK_RESET_CLOCK_RATE" value="50000000" />
-  <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone V" />
-  <parameter name="DATA_WIDTH" value="32" />
-  <parameter name="LED_WIDTH" value="8" />
  </module>
  <module name="hps_0" kind="altera_hps" version="24.1" enabled="1">
   <parameter name="ABSTRACT_REAL_COMPARE_TEST" value="false" />
@@ -671,28 +639,11 @@
   <parameter name="usb_mp_clk_div" value="0" />
   <parameter name="use_default_mpu_clk" value="true" />
  </module>
- <module name="quad_enc_0" kind="quad_enc" version="1.0" enabled="1">
+ <module name="quad_comm_0" kind="quad_comm" version="1.0" enabled="1">
   <parameter name="COUNTER_WIDTH" value="16" />
+  <parameter name="DATA_WIDTH" value="32" />
  </module>
- <module name="quad_enc_1" kind="quad_enc" version="1.0" enabled="1">
-  <parameter name="COUNTER_WIDTH" value="16" />
- </module>
- <connection
-   kind="avalon"
-   version="24.1"
-   start="hps_0.h2f_lw_axi_master"
-   end="esl_bus_demo_0.s0">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0000" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
- <connection kind="clock" version="24.1" start="clk_0.clk" end="quad_enc_0.clock" />
- <connection kind="clock" version="24.1" start="clk_0.clk" end="quad_enc_1.clock" />
- <connection
-   kind="clock"
-   version="24.1"
-   start="clk_0.clk"
-   end="esl_bus_demo_0.clock_reset" />
+ <connection kind="clock" version="24.1" start="clk_0.clk" end="quad_comm_0.clock" />
  <connection
    kind="clock"
    version="24.1"
@@ -702,17 +653,7 @@
    kind="reset"
    version="24.1"
    start="clk_0.clk_reset"
-   end="esl_bus_demo_0.clock_reset_reset" />
- <connection
-   kind="reset"
-   version="24.1"
-   start="clk_0.clk_reset"
-   end="quad_enc_0.reset" />
- <connection
-   kind="reset"
-   version="24.1"
-   start="clk_0.clk_reset"
-   end="quad_enc_1.reset" />
+   end="quad_comm_0.reset" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
 </system>

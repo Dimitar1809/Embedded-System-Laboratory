@@ -1,5 +1,5 @@
 Flow report for DE10_NANO_SoC
-Wed Apr 30 10:47:25 2025
+Thu May  1 10:20:26 2025
 Quartus Prime Version 24.1std.0 Build 1077 03/04/2025 SC Lite Edition
 
 
@@ -41,15 +41,15 @@ on the Quartus Prime software download page.
 +-----------------------------------------------------------------------------------+
 ; Flow Summary                                                                      ;
 +---------------------------------+-------------------------------------------------+
-; Flow Status                     ; Successful - Wed Apr 30 10:47:25 2025           ;
+; Flow Status                     ; Successful - Thu May  1 10:20:26 2025           ;
 ; Quartus Prime Version           ; 24.1std.0 Build 1077 03/04/2025 SC Lite Edition ;
 ; Revision Name                   ; DE10_NANO_SoC                                   ;
 ; Top-level Entity Name           ; DE10_NANO_SoC                                   ;
 ; Family                          ; Cyclone V                                       ;
 ; Device                          ; 5CSEBA6U23I7                                    ;
 ; Timing Models                   ; Final                                           ;
-; Logic utilization (in ALMs)     ; 255 / 41,910 ( < 1 % )                          ;
-; Total registers                 ; 672                                             ;
+; Logic utilization (in ALMs)     ; 7 / 41,910 ( < 1 % )                            ;
+; Total registers                 ; 241                                             ;
 ; Total pins                      ; 137 / 314 ( 44 % )                              ;
 ; Total virtual pins              ; 0                                               ;
 ; Total block memory bits         ; 0 / 5,662,720 ( 0 % )                           ;
@@ -68,7 +68,7 @@ on the Quartus Prime software download page.
 +-------------------+---------------------+
 ; Option            ; Setting             ;
 +-------------------+---------------------+
-; Start date & time ; 04/30/2025 10:43:02 ;
+; Start date & time ; 05/01/2025 10:16:17 ;
 ; Main task         ; Compilation         ;
 ; Revision Name     ; DE10_NANO_SoC       ;
 +-------------------+---------------------+
@@ -79,7 +79,7 @@ on the Quartus Prime software download page.
 +---------------------------------------+--------------------------------------------------------------------------+---------------+--------------------------------+-----------------------------------+
 ; Assignment Name                       ; Value                                                                    ; Default Value ; Entity Name                    ; Section Id                        ;
 +---------------------------------------+--------------------------------------------------------------------------+---------------+--------------------------------+-----------------------------------+
-; COMPILER_SIGNATURE_ID                 ; 101564824604420.174600258056187                                          ; --            ; --                             ; --                                ;
+; COMPILER_SIGNATURE_ID                 ; 101564824604420.174608737557538                                          ; --            ; --                             ; --                                ;
 ; ECO_REGENERATE_REPORT                 ; On                                                                       ; Off           ; --                             ; --                                ;
 ; EDA_GENERATE_FUNCTIONAL_NETLIST       ; Off                                                                      ; --            ; --                             ; eda_board_design_timing           ;
 ; EDA_GENERATE_FUNCTIONAL_NETLIST       ; Off                                                                      ; --            ; --                             ; eda_board_design_boundary_scan    ;
@@ -128,7 +128,7 @@ on the Quartus Prime software download page.
 ; PROJECT_OUTPUT_DIRECTORY              ; output_files                                                             ; --            ; --                             ; --                                ;
 ; SLD_FILE                              ; soc_system/synthesis/soc_system.regmap                                   ; --            ; --                             ; --                                ;
 ; SLD_FILE                              ; soc_system/synthesis/soc_system.debuginfo                                ; --            ; --                             ; --                                ;
-; SLD_INFO                              ; QSYS_NAME soc_system HAS_SOPCINFO 1 GENERATION_ID 1745999512             ; --            ; soc_system                     ; --                                ;
+; SLD_INFO                              ; QSYS_NAME soc_system HAS_SOPCINFO 1 GENERATION_ID 1746087265             ; --            ; soc_system                     ; --                                ;
 ; SOPCINFO_FILE                         ; soc_system/synthesis/../../soc_system.sopcinfo                           ; --            ; --                             ; --                                ;
 ; SYNTHESIS_ONLY_QIP                    ; On                                                                       ; --            ; --                             ; --                                ;
 ; USE_DLL_FREQUENCY_FOR_DQS_DELAY_CHAIN ; On                                                                       ; Off           ; --                             ; --                                ;
@@ -140,12 +140,12 @@ on the Quartus Prime software download page.
 +----------------------+--------------+-------------------------+---------------------+------------------------------------+
 ; Module Name          ; Elapsed Time ; Average Processors Used ; Peak Virtual Memory ; Total CPU Time (on all processors) ;
 +----------------------+--------------+-------------------------+---------------------+------------------------------------+
-; Analysis & Synthesis ; 00:00:14     ; 1.0                     ; 634 MB              ; 00:00:22                           ;
-; Fitter               ; 00:00:54     ; 1.1                     ; 2669 MB             ; 00:01:35                           ;
-; Assembler            ; 00:00:08     ; 1.0                     ; 542 MB              ; 00:00:08                           ;
-; Timing Analyzer      ; 00:00:24     ; 1.1                     ; 1541 MB             ; 00:00:26                           ;
-; EDA Netlist Writer   ; 00:00:03     ; 1.0                     ; 696 MB              ; 00:00:03                           ;
-; Total                ; 00:01:43     ; --                      ; --                  ; 00:02:34                           ;
+; Analysis & Synthesis ; 00:00:12     ; 1.0                     ; 614 MB              ; 00:00:21                           ;
+; Fitter               ; 00:00:47     ; 1.1                     ; 2614 MB             ; 00:01:12                           ;
+; Assembler            ; 00:00:07     ; 1.0                     ; 530 MB              ; 00:00:07                           ;
+; Timing Analyzer      ; 00:00:22     ; 1.0                     ; 1499 MB             ; 00:00:22                           ;
+; EDA Netlist Writer   ; 00:00:02     ; 1.0                     ; 690 MB              ; 00:00:02                           ;
+; Total                ; 00:01:30     ; --                      ; --                  ; 00:02:04                           ;
 +----------------------+--------------+-------------------------+---------------------+------------------------------------+
 
 
