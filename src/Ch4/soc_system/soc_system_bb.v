@@ -18,17 +18,11 @@ module soc_system (
 	memory_mem_odt,
 	memory_mem_dm,
 	memory_oct_rzqin,
-	reset_reset_n,
-	quad_comm_0_yaw_channel_b_signal,
-	quad_comm_0_yaw_channel_a_signal,
-	quad_comm_0_pitch_channel_b_signal,
-	quad_comm_0_pitch_channel_a_signal,
-	quad_comm_0_slave_address,
-	quad_comm_0_slave_read,
-	quad_comm_0_slave_readdata,
-	quad_comm_0_slave_write,
-	quad_comm_0_slave_writedata,
-	quad_comm_0_slave_byteenable);	
+	quad_enc_0_channel_a_signal,
+	quad_enc_0_channel_b_signal,
+	quad_enc_1_channel_a_signal,
+	quad_enc_1_channel_b_signal,
+	reset_reset_n);	
 
 	input		clk_clk;
 	output		hps_0_h2f_reset_reset_n;
@@ -48,15 +42,9 @@ module soc_system (
 	output		memory_mem_odt;
 	output	[3:0]	memory_mem_dm;
 	input		memory_oct_rzqin;
+	input		quad_enc_0_channel_a_signal;
+	input		quad_enc_0_channel_b_signal;
+	input		quad_enc_1_channel_a_signal;
+	input		quad_enc_1_channel_b_signal;
 	input		reset_reset_n;
-	input		quad_comm_0_yaw_channel_b_signal;
-	input		quad_comm_0_yaw_channel_a_signal;
-	input		quad_comm_0_pitch_channel_b_signal;
-	input		quad_comm_0_pitch_channel_a_signal;
-	input	[7:0]	quad_comm_0_slave_address;
-	input		quad_comm_0_slave_read;
-	output	[31:0]	quad_comm_0_slave_readdata;
-	input		quad_comm_0_slave_write;
-	input	[31:0]	quad_comm_0_slave_writedata;
-	input	[3:0]	quad_comm_0_slave_byteenable;
 endmodule

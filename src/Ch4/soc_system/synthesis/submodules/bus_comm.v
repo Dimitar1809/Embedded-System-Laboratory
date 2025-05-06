@@ -17,9 +17,9 @@ module bus_comm #(
         input wire      pitch_channel_b  // Pitch channel B
 
 	);
-    localparam HPS_0_ARM_A9_0_ESL_BUS_DEMO_0_BASE = 32'hFF200000;
-    localparam ADDR_YAW_COUNTER =  HPS_0_ARM_A9_0_ESL_BUS_DEMO_0_BASE;
-    localparam ADDR_PITCH_COUNTER = HPS_0_ARM_A9_0_ESL_BUS_DEMO_0_BASE + COUNTER_WIDTH;
+    localparam OFFSET_YAW_COUNTER   = 8'h00; // Yaw counter at base + 0
+    localparam OFFSET_PITCH_COUNTER = 8'h04; // Pitch counter at base + 4 (for 32-bit access)
+
 
     wire [COUNTER_WIDTH-1:0] yaw_counter;
     wire [COUNTER_WIDTH-1:0] pitch_counter;
@@ -50,8 +50,8 @@ module bus_comm #(
         end else begin
             if (slave_read) begin
                 case (slave_address)
-                    ADDR_YAW_COUNTER: slave_readdata <= yaw_counter;
-                    ADDR_PITCH_COUNTER: slave_readdata <= pitch_counter;
+                    OFFSET_YAW_COUNTER: slave_readdata <= {{32-COUNTER_WIDTH{1'b0}}, yaw_counter}; // Zero-extend
+                    OFFSET_PITCH_COUNTER: slave_readdata <= {{32-COUNTER_WIDTH{1'b0}}, pitch_counter}; // Zero-extend
                     default: slave_readdata <= 32'b0;
                 endcase
             end

@@ -78,27 +78,22 @@
  <interface name="hps_0_hps_io" internal="hps_0.hps_io" />
  <interface name="memory" internal="hps_0.memory" type="conduit" dir="end" />
  <interface
-   name="quad_comm_0_pitch_channel_a"
+   name="quad_enc_0_channel_a"
    internal="quad_comm_0.pitch_channel_a"
    type="conduit"
    dir="end" />
  <interface
-   name="quad_comm_0_pitch_channel_b"
+   name="quad_enc_0_channel_b"
    internal="quad_comm_0.pitch_channel_b"
    type="conduit"
    dir="end" />
  <interface
-   name="quad_comm_0_slave"
-   internal="quad_comm_0.slave"
-   type="avalon"
-   dir="end" />
- <interface
-   name="quad_comm_0_yaw_channel_a"
+   name="quad_enc_1_channel_a"
    internal="quad_comm_0.yaw_channel_a"
    type="conduit"
    dir="end" />
  <interface
-   name="quad_comm_0_yaw_channel_b"
+   name="quad_enc_1_channel_b"
    internal="quad_comm_0.yaw_channel_b"
    type="conduit"
    dir="end" />
@@ -643,6 +638,15 @@
   <parameter name="COUNTER_WIDTH" value="16" />
   <parameter name="DATA_WIDTH" value="32" />
  </module>
+ <connection
+   kind="avalon"
+   version="24.1"
+   start="hps_0.h2f_lw_axi_master"
+   end="quad_comm_0.slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
  <connection kind="clock" version="24.1" start="clk_0.clk" end="quad_comm_0.clock" />
  <connection
    kind="clock"

@@ -27,7 +27,7 @@ preplace inst soc_system.hps_0.i2c3 -pg 1
 preplace inst soc_system.hps_0.wd_timer1 -pg 1
 preplace inst soc_system.hps_0.timer0 -pg 1
 preplace inst soc_system.hps_0.eosc1 -pg 1
-preplace inst soc_system -pg 1 -lvl 1 -y 40 -regml 4 -regy -20
+preplace inst soc_system -pg 1 -lvl 1 -y 40 -regy -20
 preplace inst soc_system.hps_0.dcan0 -pg 1
 preplace inst soc_system.hps_0.spim0 -pg 1
 preplace inst soc_system.hps_0.timer1 -pg 1
@@ -41,31 +41,29 @@ preplace inst soc_system.hps_0.spim1 -pg 1
 preplace inst soc_system.hps_0.gpio0 -pg 1
 preplace inst soc_system.hps_0.timer2 -pg 1
 preplace inst soc_system.hps_0.arm_a9_0 -pg 1
-preplace inst soc_system.quad_enc_0 -pg 1 -lvl 2 -y 30
 preplace inst soc_system.hps_0.timer -pg 1
 preplace inst soc_system.hps_0.gpio1 -pg 1
 preplace inst soc_system.hps_0.timer3 -pg 1
 preplace inst soc_system.hps_0.arm_a9_1 -pg 1
-preplace inst soc_system.quad_enc_1 -pg 1 -lvl 2 -y 360
+preplace inst soc_system.quad_comm_0 -pg 1 -lvl 3 -y 30
 preplace inst soc_system.hps_0.nand0 -pg 1
 preplace inst soc_system.hps_0.gpio2 -pg 1
 preplace inst soc_system.hps_0.arm_gic_0 -pg 1
-preplace inst soc_system.hps_0 -pg 1 -lvl 2 -y 260
-preplace inst soc_system.clk_0 -pg 1 -lvl 1 -y 300
+preplace inst soc_system.hps_0 -pg 1 -lvl 2 -y 220
+preplace inst soc_system.clk_0 -pg 1 -lvl 1 -y 260
 preplace inst soc_system.hps_0.f2s_periph_ref_clk -pg 1
 preplace inst soc_system.hps_0.fpga_interfaces -pg 1
 preplace inst soc_system.hps_0.axi_sdram -pg 1
-preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)soc_system.memory,(SLAVE)hps_0.memory) 1 0 2 NJ 290 NJ
+preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)quad_comm_0.yaw_channel_a,(SLAVE)soc_system.quad_comm_0_yaw_channel_a) 1 0 3 NJ 120 NJ 120 NJ
+preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)soc_system.quad_comm_0_pitch_channel_a,(SLAVE)quad_comm_0.pitch_channel_a) 1 0 3 NJ 60 NJ 60 NJ
+preplace netloc POINT_TO_POINT<net_container>soc_system</net_container>(MASTER)clk_0.clk_reset,(SLAVE)quad_comm_0.reset) 1 1 2 NJ 180 820
+preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)soc_system.memory,(SLAVE)hps_0.memory) 1 0 2 NJ 250 NJ
 preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)soc_system.clk,(SLAVE)clk_0.clk_in) 1 0 1 NJ
+preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)quad_comm_0.yaw_channel_b,(SLAVE)soc_system.quad_comm_0_yaw_channel_b) 1 0 3 NJ 140 NJ 140 NJ
 preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)soc_system.reset,(SLAVE)clk_0.clk_in_reset) 1 0 1 NJ
-preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)quad_enc_1.channel_b,(SLAVE)soc_system.quad_enc_1_channel_b) 1 0 2 NJ 390 NJ
-preplace netloc FAN_OUT<net_container>soc_system</net_container>(SLAVE)hps_0.h2f_lw_axi_clock,(SLAVE)quad_enc_0.clock,(SLAVE)quad_enc_1.clock,(MASTER)clk_0.clk) 1 1 1 350
-preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)quad_enc_1.counter,(SLAVE)soc_system.quad_enc_1_counter) 1 0 2 NJ 430 NJ
-preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)quad_enc_1.channel_a,(SLAVE)soc_system.quad_enc_1_channel_a) 1 0 2 NJ 370 NJ
-preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)soc_system.quad_enc_0_channel_a,(SLAVE)quad_enc_0.channel_a) 1 0 2 NJ 40 NJ
-preplace netloc EXPORT<net_container>soc_system</net_container>(MASTER)hps_0.h2f_reset,(MASTER)soc_system.hps_0_h2f_reset) 1 2 2 NJ 290 NJ
-preplace netloc FAN_OUT<net_container>soc_system</net_container>(MASTER)clk_0.clk_reset,(SLAVE)quad_enc_1.reset,(SLAVE)quad_enc_0.reset) 1 1 1 370
-preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)soc_system.quad_enc_0_counter,(SLAVE)quad_enc_0.counter) 1 0 2 NJ 100 NJ
-preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)soc_system.quad_enc_0_channel_b,(SLAVE)quad_enc_0.channel_b) 1 0 2 NJ 60 NJ
-levelinfo -pg 1 0 140 1000
-levelinfo -hier soc_system 150 180 550 850 870
+preplace netloc EXPORT<net_container>soc_system</net_container>(SLAVE)quad_comm_0.pitch_channel_b,(SLAVE)soc_system.quad_comm_0_pitch_channel_b) 1 0 3 NJ 80 NJ 80 NJ
+preplace netloc POINT_TO_POINT<net_container>soc_system</net_container>(SLAVE)quad_comm_0.slave,(MASTER)hps_0.h2f_lw_axi_master) 1 2 1 860
+preplace netloc EXPORT<net_container>soc_system</net_container>(MASTER)soc_system.hps_0_h2f_reset,(MASTER)hps_0.h2f_reset) 1 2 2 NJ 250 NJ
+preplace netloc FAN_OUT<net_container>soc_system</net_container>(MASTER)clk_0.clk,(SLAVE)hps_0.h2f_lw_axi_clock,(SLAVE)quad_comm_0.clock) 1 1 2 390 160 780
+levelinfo -pg 1 0 180 1150
+levelinfo -hier soc_system 190 220 590 890 1020

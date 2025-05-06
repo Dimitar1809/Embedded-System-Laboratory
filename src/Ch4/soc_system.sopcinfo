@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="soc_system" kind="soc_system" version="1.0" fabric="QSYS">
  <!-- Format version 24.1 1077 (Future versions may contain additional information.) -->
- <!-- 2025.05.01.11:24:40 -->
+ <!-- 2025.05.06.16:23:33 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1746091467</value>
+  <value>1746541399</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -15658,6 +15658,14 @@ parameters are a RESULT of the module parameters. -->
     <width>1</width>
     <role>rready</role>
    </port>
+   <memoryBlock>
+    <isBridge>false</isBridge>
+    <moduleName>quad_comm_0</moduleName>
+    <slaveName>slave</slaveName>
+    <name>quad_comm_0.slave</name>
+    <baseAddress>0</baseAddress>
+    <span>1024</span>
+   </memoryBlock>
   </interface>
  </module>
  <module
@@ -41157,6 +41165,14 @@ parameters are a RESULT of the module parameters. -->
     <width>1</width>
     <role>rready</role>
    </port>
+   <memoryBlock>
+    <isBridge>false</isBridge>
+    <moduleName>quad_comm_0</moduleName>
+    <slaveName>slave</slaveName>
+    <name>quad_comm_0.slave</name>
+    <baseAddress>0</baseAddress>
+    <span>1024</span>
+   </memoryBlock>
   </interface>
  </module>
  <module
@@ -42278,6 +42294,14 @@ parameters are a RESULT of the module parameters. -->
    </memoryBlock>
    <memoryBlock>
     <isBridge>false</isBridge>
+    <moduleName>quad_comm_0</moduleName>
+    <slaveName>slave</slaveName>
+    <name>quad_comm_0.slave</name>
+    <baseAddress>4280287232</baseAddress>
+    <span>1024</span>
+   </memoryBlock>
+   <memoryBlock>
+    <isBridge>false</isBridge>
     <moduleName>hps_0_arm_gic_0</moduleName>
     <slaveName>axi_slave0</slaveName>
     <name>hps_0_arm_gic_0.axi_slave0</name>
@@ -43090,6 +43114,14 @@ parameters are a RESULT of the module parameters. -->
     <name>hps_0_bridges.axi_h2f_lw</name>
     <baseAddress>4280287232</baseAddress>
     <span>2097152</span>
+   </memoryBlock>
+   <memoryBlock>
+    <isBridge>false</isBridge>
+    <moduleName>quad_comm_0</moduleName>
+    <slaveName>slave</slaveName>
+    <name>quad_comm_0.slave</name>
+    <baseAddress>4280287232</baseAddress>
+    <span>1024</span>
    </memoryBlock>
    <memoryBlock>
     <isBridge>false</isBridge>
@@ -79348,6 +79380,57 @@ parameters are a RESULT of the module parameters. -->
   <endConnectionPoint>interrupt_sender</endConnectionPoint>
  </connection>
  <connection
+   name="hps_0_bridges.h2f_lw/quad_comm_0.slave"
+   kind="avalon"
+   version="24.1"
+   start="hps_0_bridges.h2f_lw"
+   end="quad_comm_0.slave">
+  <parameter name="arbitrationPriority">
+   <type>int</type>
+   <value>1</value>
+   <derived>false</derived>
+   <enabled>true</enabled>
+   <visible>true</visible>
+   <valid>true</valid>
+  </parameter>
+  <parameter name="baseAddress">
+   <type>java.math.BigInteger</type>
+   <value>0x0000</value>
+   <derived>false</derived>
+   <enabled>true</enabled>
+   <visible>true</visible>
+   <valid>true</valid>
+  </parameter>
+  <parameter name="defaultConnection">
+   <type>boolean</type>
+   <value>false</value>
+   <derived>false</derived>
+   <enabled>true</enabled>
+   <visible>true</visible>
+   <valid>true</valid>
+  </parameter>
+  <parameter name="deviceFamily">
+   <type>java.lang.String</type>
+   <value>UNKNOWN</value>
+   <derived>false</derived>
+   <enabled>true</enabled>
+   <visible>true</visible>
+   <valid>true</valid>
+  </parameter>
+  <parameter name="generateLegacySim">
+   <type>boolean</type>
+   <value>false</value>
+   <derived>false</derived>
+   <enabled>true</enabled>
+   <visible>true</visible>
+   <valid>true</valid>
+  </parameter>
+  <startModule>hps_0_bridges</startModule>
+  <startConnectionPoint>h2f_lw</startConnectionPoint>
+  <endModule>quad_comm_0</endModule>
+  <endConnectionPoint>slave</endConnectionPoint>
+ </connection>
+ <connection
    name="clk_0.clk/quad_comm_0.clock"
    kind="clock"
    version="24.1"
@@ -79837,7 +79920,7 @@ parameters are a RESULT of the module parameters. -->
   <version>24.1</version>
  </plugin>
  <plugin>
-  <instanceCount>88</instanceCount>
+  <instanceCount>89</instanceCount>
   <name>avalon</name>
   <type>com.altera.entityinterfaces.IElementClass</type>
   <subtype>com.altera.entityinterfaces.IConnection</subtype>
