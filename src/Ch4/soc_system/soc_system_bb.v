@@ -22,7 +22,13 @@ module soc_system (
 	quad_enc_0_channel_b_signal,
 	quad_enc_1_channel_a_signal,
 	quad_enc_1_channel_b_signal,
-	reset_reset_n);	
+	reset_reset_n,
+	quad_comm_0_pwm_pitch_c_signal,
+	quad_comm_0_pwm_pitch_ina_signal,
+	quad_comm_0_pwm_pitch_inb_signal,
+	quad_comm_0_pwm_yaw_c_signal,
+	quad_comm_0_pwm_yaw_ina_signal,
+	quad_comm_0_pwm_yaw_inb_signal);	
 
 	input		clk_clk;
 	output		hps_0_h2f_reset_reset_n;
@@ -47,4 +53,10 @@ module soc_system (
 	input		quad_enc_1_channel_a_signal;
 	input		quad_enc_1_channel_b_signal;
 	input		reset_reset_n;
+	output		quad_comm_0_pwm_pitch_c_signal;
+	output		quad_comm_0_pwm_pitch_ina_signal;
+	output		quad_comm_0_pwm_pitch_inb_signal;
+	output		quad_comm_0_pwm_yaw_c_signal;
+	output		quad_comm_0_pwm_yaw_ina_signal;
+	output		quad_comm_0_pwm_yaw_inb_signal;
 endmodule

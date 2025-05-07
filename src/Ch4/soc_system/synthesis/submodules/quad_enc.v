@@ -8,17 +8,34 @@ module quad_enc #(
     output reg unsigned [COUNTER_WIDTH-1:0] counter
 );
 
-    reg prev_a;
-    reg prev_b;
+    debouncer #(
+        .STABILITY_CYCLES(20) // Adjust as needed
+    ) debouncer_a (
+        .clk(clk),
+        .reset(reset),
+        .noisy_input(channel_a),
+        .debounced_output(debounced_channel_a)
+    );
+    debouncer #(
+        .STABILITY_CYCLES(20) // Adjust as needed
+    ) debouncer_b (
+        .clk(clk),
+        .reset(reset),
+        .noisy_input(channel_b),
+        .debounced_output(debounced_channel_b)
+    );
+
+    reg prev_debounced_a;
+    reg prev_debounced_b;
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            prev_a  <= 1'b0;
-            prev_b  <= 1'b0;
+            prev_debounced_a  <= 1'b0;
+            prev_debounced_b  <= 1'b0;
             counter <= {COUNTER_WIDTH{1'b0}};
         end else begin
             // build a 4‑bit word from last and current AB
-            case ({prev_a, prev_b, channel_a, channel_b})
+            case ({prev_debounced_a, prev_debounced_b, debounced_channel_a, debounced_channel_b})
                 // forward: 00→01→11→10→00
                 4'b0001, 4'b0111, 4'b1110, 4'b1000:
                     counter <= counter + 1;
@@ -28,8 +45,8 @@ module quad_enc #(
                 default: ;
             endcase
 
-            prev_a <= channel_a;
-            prev_b <= channel_b;
+            prev_debounced_a <= debounced_channel_a;
+            prev_debounced_b <= debounced_channel_b;
         end
     end
 

@@ -1,11 +1,11 @@
-Analysis & Synthesis Status : Successful - Tue May  6 16:56:58 2025
+Analysis & Synthesis Status : Successful - Wed May  7 11:36:09 2025
 Quartus Prime Version : 24.1std.0 Build 1077 03/04/2025 SC Lite Edition
 Revision Name : DE10_NANO_SoC
 Top-level Entity Name : DE10_NANO_SoC
 Family : Cyclone V
 Logic utilization (in ALMs) : N/A
-Total registers : 481
-Total pins : 141
+Total registers : 665
+Total pins : 147
 Total virtual pins : 0
 Total block memory bits : 0
 Total DSP Blocks : 0

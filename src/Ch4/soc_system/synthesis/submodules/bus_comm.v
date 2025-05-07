@@ -14,15 +14,24 @@ module bus_comm #(
         input wire      yaw_channel_a, // Yaw channel A
         input wire      yaw_channel_b, // Yaw channel B
         input wire      pitch_channel_a, // Pitch channel A
-        input wire      pitch_channel_b  // Pitch channel B
+        input wire      pitch_channel_b, // Pitch channel B
+        output wire     pwm_yaw_c, // Yaw PWM output
+        output wire     pwm_yaw_ina, // Yaw PWM INA output
+        output wire     pwm_yaw_inb, // Yaw PWM INB output
+        output wire     pwm_pitch_c, // Pitch PWM output
+        output wire     pwm_pitch_ina, // Pitch PWM INA output
+        output wire     pwm_pitch_inb // Pitch PWM INB output
 
 	);
-    localparam OFFSET_YAW_COUNTER   = 8'h00; // Yaw counter at base + 0
-    localparam OFFSET_PITCH_COUNTER = 8'h04; // Pitch counter at base + 4 (for 32-bit access)
+    localparam READ_COUNTERS_OFFSET   = 8'h00;
 
-
-    wire [COUNTER_WIDTH-1:0] yaw_counter;
-    wire [COUNTER_WIDTH-1:0] pitch_counter;
+    reg [13:0] yaw_duty_cycle;
+    reg [1:0] yaw_direction;
+    reg [13:0] pitch_duty_cycle;
+    reg [1:0] pitch_direction;
+    
+    wire [COUNTER_WIDTH-1:0] mem_masked_yaw;
+    wire [COUNTER_WIDTH-1:0] mem_masked_pitch;
 
     // Definition of the counter
     quad_enc #(
@@ -32,7 +41,7 @@ module bus_comm #(
         .reset(reset),
         .channel_a(yaw_channel_a),
         .channel_b(yaw_channel_b),
-        .counter(yaw_counter)
+        .counter(mem_masked_yaw)
     );
 
     quad_enc #(
@@ -42,21 +51,44 @@ module bus_comm #(
         .reset(reset),
         .channel_a(pitch_channel_a),
         .channel_b(pitch_channel_b),
-        .counter(pitch_counter)
+        .counter(mem_masked_pitch)
     );
+
+    pwm_gen yaw_pwm (  
+        .clk(clk),
+        .reset(reset),
+        .duty_cycle(yaw_duty_cycle),
+        .direction(yaw_direction),
+        .pwm_out_c(pwm_yaw_c),
+        .pwm_out_ina(pwm_yaw_ina),
+        .pwm_out_inb(pwm_yaw_inb)
+    );
+
+    pwm_gen pitch_pwm (  
+        .clk(clk),
+        .reset(reset),
+        .duty_cycle(pitch_duty_cycle),
+        .direction(pitch_direction),
+        .pwm_out_c(pwm_pitch_c),
+        .pwm_out_ina(pwm_pitch_ina),
+        .pwm_out_inb(pwm_pitch_inb)
+    );
+    
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
         end else begin
             if (slave_read) begin
                 case (slave_address)
-                    OFFSET_YAW_COUNTER: slave_readdata <= {{32-COUNTER_WIDTH{1'b0}}, yaw_counter}; // Zero-extend
-                    OFFSET_PITCH_COUNTER: slave_readdata <= {{32-COUNTER_WIDTH{1'b0}}, pitch_counter}; // Zero-extend
+                    READ_COUNTERS_OFFSET: slave_readdata <= {mem_masked_pitch, mem_masked_yaw};
                     default: slave_readdata <= 32'b0;
                 endcase
             end
             if (slave_write) begin
-                //mem <= slave_writedata;
+                pitch_duty_cycle <= slave_writedata[13:0];
+                pitch_direction <= slave_writedata[15:14];
+                yaw_duty_cycle <= slave_writedata[29:16];
+                yaw_direction <= slave_writedata[31:30];
             end;
         end;
     end

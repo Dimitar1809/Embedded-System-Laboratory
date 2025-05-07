@@ -4,29 +4,35 @@
 
 `timescale 1 ps / 1 ps
 module soc_system (
-		input  wire        clk_clk,                     //                  clk.clk
-		output wire        hps_0_h2f_reset_reset_n,     //      hps_0_h2f_reset.reset_n
-		output wire [14:0] memory_mem_a,                //               memory.mem_a
-		output wire [2:0]  memory_mem_ba,               //                     .mem_ba
-		output wire        memory_mem_ck,               //                     .mem_ck
-		output wire        memory_mem_ck_n,             //                     .mem_ck_n
-		output wire        memory_mem_cke,              //                     .mem_cke
-		output wire        memory_mem_cs_n,             //                     .mem_cs_n
-		output wire        memory_mem_ras_n,            //                     .mem_ras_n
-		output wire        memory_mem_cas_n,            //                     .mem_cas_n
-		output wire        memory_mem_we_n,             //                     .mem_we_n
-		output wire        memory_mem_reset_n,          //                     .mem_reset_n
-		inout  wire [31:0] memory_mem_dq,               //                     .mem_dq
-		inout  wire [3:0]  memory_mem_dqs,              //                     .mem_dqs
-		inout  wire [3:0]  memory_mem_dqs_n,            //                     .mem_dqs_n
-		output wire        memory_mem_odt,              //                     .mem_odt
-		output wire [3:0]  memory_mem_dm,               //                     .mem_dm
-		input  wire        memory_oct_rzqin,            //                     .oct_rzqin
-		input  wire        quad_enc_0_channel_a_signal, // quad_enc_0_channel_a.signal
-		input  wire        quad_enc_0_channel_b_signal, // quad_enc_0_channel_b.signal
-		input  wire        quad_enc_1_channel_a_signal, // quad_enc_1_channel_a.signal
-		input  wire        quad_enc_1_channel_b_signal, // quad_enc_1_channel_b.signal
-		input  wire        reset_reset_n                //                reset.reset_n
+		input  wire        clk_clk,                          //                       clk.clk
+		output wire        hps_0_h2f_reset_reset_n,          //           hps_0_h2f_reset.reset_n
+		output wire [14:0] memory_mem_a,                     //                    memory.mem_a
+		output wire [2:0]  memory_mem_ba,                    //                          .mem_ba
+		output wire        memory_mem_ck,                    //                          .mem_ck
+		output wire        memory_mem_ck_n,                  //                          .mem_ck_n
+		output wire        memory_mem_cke,                   //                          .mem_cke
+		output wire        memory_mem_cs_n,                  //                          .mem_cs_n
+		output wire        memory_mem_ras_n,                 //                          .mem_ras_n
+		output wire        memory_mem_cas_n,                 //                          .mem_cas_n
+		output wire        memory_mem_we_n,                  //                          .mem_we_n
+		output wire        memory_mem_reset_n,               //                          .mem_reset_n
+		inout  wire [31:0] memory_mem_dq,                    //                          .mem_dq
+		inout  wire [3:0]  memory_mem_dqs,                   //                          .mem_dqs
+		inout  wire [3:0]  memory_mem_dqs_n,                 //                          .mem_dqs_n
+		output wire        memory_mem_odt,                   //                          .mem_odt
+		output wire [3:0]  memory_mem_dm,                    //                          .mem_dm
+		input  wire        memory_oct_rzqin,                 //                          .oct_rzqin
+		output wire        quad_comm_0_pwm_pitch_c_signal,   //   quad_comm_0_pwm_pitch_c.signal
+		output wire        quad_comm_0_pwm_pitch_ina_signal, // quad_comm_0_pwm_pitch_ina.signal
+		output wire        quad_comm_0_pwm_pitch_inb_signal, // quad_comm_0_pwm_pitch_inb.signal
+		output wire        quad_comm_0_pwm_yaw_c_signal,     //     quad_comm_0_pwm_yaw_c.signal
+		output wire        quad_comm_0_pwm_yaw_ina_signal,   //   quad_comm_0_pwm_yaw_ina.signal
+		output wire        quad_comm_0_pwm_yaw_inb_signal,   //   quad_comm_0_pwm_yaw_inb.signal
+		input  wire        quad_enc_0_channel_a_signal,      //      quad_enc_0_channel_a.signal
+		input  wire        quad_enc_0_channel_b_signal,      //      quad_enc_0_channel_b.signal
+		input  wire        quad_enc_1_channel_a_signal,      //      quad_enc_1_channel_a.signal
+		input  wire        quad_enc_1_channel_b_signal,      //      quad_enc_1_channel_b.signal
+		input  wire        reset_reset_n                     //                     reset.reset_n
 	);
 
 	wire   [1:0] hps_0_h2f_lw_axi_master_awburst;                // hps_0:h2f_lw_AWBURST -> mm_interconnect_0:hps_0_h2f_lw_axi_master_awburst
@@ -149,7 +155,13 @@ module soc_system (
 		.pitch_channel_a  (quad_enc_0_channel_a_signal),                    // pitch_channel_a.signal
 		.pitch_channel_b  (quad_enc_0_channel_b_signal),                    // pitch_channel_b.signal
 		.yaw_channel_a    (quad_enc_1_channel_a_signal),                    //   yaw_channel_a.signal
-		.yaw_channel_b    (quad_enc_1_channel_b_signal)                     //   yaw_channel_b.signal
+		.yaw_channel_b    (quad_enc_1_channel_b_signal),                    //   yaw_channel_b.signal
+		.pwm_pitch_c      (quad_comm_0_pwm_pitch_c_signal),                 //     pwm_pitch_c.signal
+		.pwm_pitch_ina    (quad_comm_0_pwm_pitch_ina_signal),               //   pwm_pitch_ina.signal
+		.pwm_pitch_inb    (quad_comm_0_pwm_pitch_inb_signal),               //   pwm_pitch_inb.signal
+		.pwm_yaw_c        (quad_comm_0_pwm_yaw_c_signal),                   //       pwm_yaw_c.signal
+		.pwm_yaw_ina      (quad_comm_0_pwm_yaw_ina_signal),                 //     pwm_yaw_ina.signal
+		.pwm_yaw_inb      (quad_comm_0_pwm_yaw_inb_signal)                  //     pwm_yaw_inb.signal
 	);
 
 	soc_system_mm_interconnect_0 mm_interconnect_0 (

@@ -43,6 +43,14 @@
          type = "int";
       }
    }
+   element soc_system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
 }
 ]]></parameter>
  <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
@@ -77,6 +85,36 @@
  <interface name="hps_0_h2f_user0_clock" internal="hps_0.h2f_user0_clock" />
  <interface name="hps_0_hps_io" internal="hps_0.hps_io" />
  <interface name="memory" internal="hps_0.memory" type="conduit" dir="end" />
+ <interface
+   name="quad_comm_0_pwm_pitch_c"
+   internal="quad_comm_0.pwm_pitch_c"
+   type="conduit"
+   dir="end" />
+ <interface
+   name="quad_comm_0_pwm_pitch_ina"
+   internal="quad_comm_0.pwm_pitch_ina"
+   type="conduit"
+   dir="end" />
+ <interface
+   name="quad_comm_0_pwm_pitch_inb"
+   internal="quad_comm_0.pwm_pitch_inb"
+   type="conduit"
+   dir="end" />
+ <interface
+   name="quad_comm_0_pwm_yaw_c"
+   internal="quad_comm_0.pwm_yaw_c"
+   type="conduit"
+   dir="end" />
+ <interface
+   name="quad_comm_0_pwm_yaw_ina"
+   internal="quad_comm_0.pwm_yaw_ina"
+   type="conduit"
+   dir="end" />
+ <interface
+   name="quad_comm_0_pwm_yaw_inb"
+   internal="quad_comm_0.pwm_yaw_inb"
+   type="conduit"
+   dir="end" />
  <interface
    name="quad_enc_0_channel_a"
    internal="quad_comm_0.pitch_channel_a"

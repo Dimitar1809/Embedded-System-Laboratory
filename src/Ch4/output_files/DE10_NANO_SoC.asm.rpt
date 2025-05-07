@@ -1,5 +1,5 @@
 Assembler report for DE10_NANO_SoC
-Tue May  6 16:58:01 2025
+Wed May  7 11:37:13 2025
 Quartus Prime Version 24.1std.0 Build 1077 03/04/2025 SC Lite Edition
 
 
@@ -38,7 +38,7 @@ on the Quartus Prime software download page.
 +---------------------------------------------------------------+
 ; Assembler Summary                                             ;
 +-----------------------+---------------------------------------+
-; Assembler Status      ; Successful - Tue May  6 16:58:01 2025 ;
+; Assembler Status      ; Successful - Wed May  7 11:37:13 2025 ;
 ; Revision Name         ; DE10_NANO_SoC                         ;
 ; Top-level Entity Name ; DE10_NANO_SoC                         ;
 ; Family                ; Cyclone V                             ;
@@ -67,8 +67,8 @@ on the Quartus Prime software download page.
 +----------------+----------------------------+
 ; Option         ; Setting                    ;
 +----------------+----------------------------+
-; JTAG usercode  ; 0x00B8AFA7                 ;
-; Checksum       ; 0x00B8AFA7                 ;
+; JTAG usercode  ; 0x00BAF799                 ;
+; Checksum       ; 0x00BAF799                 ;
 +----------------+----------------------------+
 
 
@@ -78,15 +78,15 @@ on the Quartus Prime software download page.
 Info: *******************************************************************
 Info: Running Quartus Prime Assembler
     Info: Version 24.1std.0 Build 1077 03/04/2025 SC Lite Edition
-    Info: Processing started: Tue May  6 16:57:54 2025
+    Info: Processing started: Wed May  7 11:37:05 2025
 Info: Command: quartus_asm --read_settings_files=off --write_settings_files=off DE10_NANO_SoC -c DE10_NANO_SoC
 Warning (18236): Number of processors has not been specified which may cause overloading on shared machines.  Set the global assignment NUM_PARALLEL_PROCESSORS in your QSF to an appropriate value for best performance.
 Info (115030): Assembler is generating device programming files
 Info (11878): Hard Processor Subsystem configuration has not changed and a Preloader software update is not required
 Info: Quartus Prime Assembler was successful. 0 errors, 1 warning
-    Info: Peak virtual memory: 547 megabytes
-    Info: Processing ended: Tue May  6 16:58:01 2025
-    Info: Elapsed time: 00:00:07
-    Info: Total CPU time (on all processors): 00:00:07
+    Info: Peak virtual memory: 538 megabytes
+    Info: Processing ended: Wed May  7 11:37:13 2025
+    Info: Elapsed time: 00:00:08
+    Info: Total CPU time (on all processors): 00:00:08
 
 
