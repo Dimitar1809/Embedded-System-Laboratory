@@ -1,4 +1,7 @@
-module pwm_gen(
+module pwm_gen #(
+    parameter FREQUENCY = 20000, // 20kHz
+    parameter CLOCK_FREQ = 100000000 // 100MHz
+) (
     input clk,
     input reset,
     input [13:0] duty_cycle, // 16-bit duty cycle value
@@ -9,8 +12,8 @@ module pwm_gen(
     output reg pwm_out_inb
 );
 
-localparam PWM_PERIOD = 5000; // 100 MHz / 20kHz = 5000 cycles
-reg [15:0] counter; // 16-bit counter for PWM period
+localparam PWM_PERIOD = CLOCK_FREQ / FREQUENCY;
+reg [13:0] counter; // 14-bit counter for PWM period
 
 always @(posedge clk or posedge reset) begin
     if (reset) begin
