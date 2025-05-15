@@ -97,16 +97,21 @@ int main(int argc, char** argv) {
         }
 
         // 3) Build and write the command words 
-        uint32_t cmd_pitch = (1u << 31)
-                           | ((dir_pitch & 0x3u) << 14)
-                           | (duty_pitch & 0x3FFFu);
+        uint32_t combined_cmd =
+            ((uint32_t)(duty_yaw     & 0x3FFFu) << 18)
+            | ((uint32_t)(dir_yaw      & 0x3u)   << 16)
+            | ((uint32_t)(duty_pitch   & 0x3FFFu) << 2)
+            |  ((uint32_t)(dir_pitch    & 0x3u));
 
-        uint32_t cmd_yaw   = (1u << 31)
-                           | ((dir_yaw & 0x3u) << 14)
-                           | (duty_yaw & 0x3FFFu);
 
-        pwm_regs[0] = cmd_pitch;
-        pwm_regs[1] = cmd_yaw;
+        printf("combined_cmd = 0b");
+        for (int i = 31; i >= 0; --i) {
+            putchar((combined_cmd >> i & 1) ? '1' : '0');
+            if (i % 8 == 0 && i != 0)  putchar(' ');  // space every byte
+        }
+        putchar('\n');
+
+        pwm_regs[0] = combined_cmd;
     }
 
 cleanup:

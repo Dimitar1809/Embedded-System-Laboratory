@@ -7,8 +7,13 @@ assignment-files/
 src/
 .qsys_edit/
 db/
-quartus_folder/
 *.qpf
 *.qsf
 *.qsys
 *.bak
+/quartus_folder/simulation/
+/quartus_folder/analysis/
+/quartus_folder/soc_system/
+/quartus_folder/hps_isw_handoff/
+/quartus_folder/incremental_db/
+/quartus_folder/output_files/

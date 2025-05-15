@@ -72,10 +72,11 @@ module de10_top #(
                 endcase
             end
             if (slave_write) begin
-                pitch_duty_cycle <= slave_writedata[13:0];
-                pitch_direction <= slave_writedata[15:14];
-                yaw_duty_cycle <= slave_writedata[29:16];
-                yaw_direction <= slave_writedata[31:30];
+                pitch_direction <= slave_writedata[1:0];
+                pitch_duty_cycle <= slave_writedata[15:2];
+                yaw_direction <= slave_writedata[17:16];
+                yaw_duty_cycle <= slave_writedata[31:18];
+                
             end;
         end;
     end
