@@ -71,9 +71,9 @@ module DE10_NANO_SoC(
 	 output					PITCH_PWM_VAL,
 	 output					PITCH_DIRA,
 	 output					PITCH_DIRB,
-	 output					YAW_PWM_VAL,
-		output					YAW_DIRA,
-		output				YAR_DIRB
+		output				YAW_PWM_VAL,
+		output				YAW_DIRA,
+		output				YAW_DIRB
 );
 
 
