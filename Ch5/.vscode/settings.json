@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "bitset": "c",
+        "algorithm": "c",
+        "format": "c",
+        "__bit_reference": "c",
+        "chrono": "c",
+        "map": "c",
+        "set": "c",
+        "unordered_map": "c",
+        "unordered_set": "c"
+    }
+}
