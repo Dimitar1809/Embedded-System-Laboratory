@@ -114,7 +114,7 @@ int spiXfer(int fd, unsigned speed, char *txBuf, char *rxBuf, unsigned count) {
   spi.len = count;
   spi.speed_hz = speed;
   spi.delay_usecs = 0;
-  spi.bits_per_word = 8;
+  spi.bits_per_word = 32;
   spi.cs_change = 0;
 
   err = ioctl(fd, SPI_IOC_MESSAGE(1), &spi);
@@ -133,7 +133,7 @@ int loops = LOOPS;
 
 int main(int argc, char *argv[]) {
   int i, fd;
-  double start, diff;
+  double start, diff, sps;
 
   if (argc > 1)
     bytes = atoi(argv[1]);
@@ -159,20 +159,15 @@ int main(int argc, char *argv[]) {
 
   if (fd < 0)
     return 1;
-  
-  // keep track of swaping words
-  int slot = 0;
-  memset(TXBuf, 0, bytes);
 
   for (i = 0; i < loops; i++) {
+    
 
+    TXBuf[0] = i;
+    printf("Sent %d \n",TXBuf[0]);
     spiXfer(fd, speed, TXBuf, RXBuf, bytes);
-    uint8_t v = (uint8_t)RXBuf[slot];
-    v++;
-
-    memset(TXBuf, 0, bytes);
-    slot = (slot + 1) % bytes;
-    TXBuf[slot] = v;
+    printf("received: %d, %d\n", RXBuf[0], RXBuf[4]);
+  
   }
 
   diff = time_time() - start;

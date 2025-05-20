@@ -1,97 +1,66 @@
 // TopEntity.v
-`timescale 1ns/1ps
+// Contains a verilog module called TopEntity that inplements a simple SPI bouncer.
+// What it receives in transaction N, it will send back in transaction N+1.
+// Look into SPI and Full-Duplex connection for more information if this is unclear
+//
+// Heavily insired by https://www.fpga4fun.com/SPI2.html
+// Code is intentionally left uncommented as it is only to demonstrate using the Logic Analyzer for SPI readout,
+// not necessarely a "how-to" on verilog SPI inplementation.
 
-module TopEntity #(
-    parameter integer TIMER_MAX = 50_000_000  // half-second ticks @ 100 MHz
-  ) (
-    input        clk,
-    input        SPI_CLK,
-    input        SPI_PICO,   // MOSI
-    input        SPI_CS,     // active-low CS
-    output       SPI_POCI,   // MISO
-    output reg   led2
+module TopEntity (
+    input  clk,
+    input  SPI_CLK,
+    input  SPI_PICO,
+    input  SPI_CS,
+    output SPI_POCI,
+    output led2
 );
 
-  // 1) Synchronizers & edge detect
-  reg [2:0] SPI_CLKr, SPI_CSr;
-  reg [1:0] SPI_PICOr;
-  always @(posedge clk) SPI_CLKr  <= {SPI_CLKr[1:0], SPI_CLK};
-  always @(posedge clk) SPI_CSr   <= {SPI_CSr [1:0], SPI_CS};
-  always @(posedge clk) SPI_PICOr <= {SPI_PICOr[0],  SPI_PICO};
-
-  wire SPI_CLK_risingedge  = (SPI_CLKr[2:1] == 2'b01);
+  // 
+  reg [2:0] SPI_CLKr;
+  always @(posedge clk) SPI_CLKr <= {SPI_CLKr[1:0], SPI_CLK};
+  wire SPI_CLK_risingedge = (SPI_CLKr[2:1] == 2'b01);
   wire SPI_CLK_fallingedge = (SPI_CLKr[2:1] == 2'b10);
-  wire SPI_CS_active       = ~SPI_CSr[1];
+
+  reg [2:0] SPI_CSr;
+  always @(posedge clk) SPI_CSr <= {SPI_CSr[1:0], SPI_CS};
+  wire SPI_CS_active = ~SPI_CSr[1];
   wire SPI_CS_startmessage = (SPI_CSr[2:1] == 2'b10);
-  wire mosi_bit            = SPI_PICOr[1];
+  wire SPI_CS_endmessage = (SPI_CSr[2:1] == 2'b01);
 
-  // 2) Receive shift + strobe
-  reg [2:0] bitcnt;
-  reg [7:0] byte_data_received;
-  reg       byte_received;
+  reg [1:0] SPI_PICOr;
+  always @(posedge clk) SPI_PICOr <= {SPI_PICOr[0], SPI_PICO};
+  wire SPI_PICO_data = SPI_PICOr[1];
 
+  reg [4:0] bitcnt;
+  reg byte_received;
+  reg [31:0] byte_data_received;
+
+  // receiving part, if CS not active set bitcnt to 0, at rising edge add one to bitcount
   always @(posedge clk) begin
-    if (!SPI_CS_active)
-      bitcnt <= 0;
+    if (~SPI_CS_active) bitcnt <= 5'b00000;
     else if (SPI_CLK_risingedge) begin
-      bitcnt             <= bitcnt + 1;
-      byte_data_received <= {byte_data_received[6:0], mosi_bit};
+      bitcnt <= bitcnt + 5'b00001;
+      byte_data_received <= {byte_data_received[30:0], SPI_PICO_data}; //shifts the bits
     end
   end
+
+  // if 8 bits are received, set byte received
+  always @(posedge clk) byte_received <= SPI_CS_active && SPI_CLK_risingedge && (bitcnt == 5'b11111);
+
+  reg [31:0] last_received;
+  always @(posedge clk) if (byte_received) last_received <= byte_data_received;
+
+  reg [31:0] byte_data_sent;
 
   always @(posedge clk)
-    byte_received <= SPI_CS_active && SPI_CLK_risingedge && (bitcnt == 3'b111);
-
-  // 3) Blink FSM + timer
-  localparam IDLE  = 2'b00, BLINK = 2'b01, DONE = 2'b10;
-  reg [1:0]  state       = IDLE;
-  reg [7:0]  target_count, blink_count;
-  reg [24:0] timer;
-
-  always @(posedge clk) begin
-    case (state)
-      IDLE: begin
-        led2        <= 0;
-        blink_count <= 0;
-        timer       <= 0;
-        if (byte_received) begin
-          target_count <= byte_data_received;
-          state        <= BLINK;
-        end
+    if (SPI_CS_active) begin
+      if (SPI_CS_startmessage) byte_data_sent <= last_received*2;
+      else if (SPI_CLK_fallingedge) begin
+        byte_data_sent <= {byte_data_sent[30:0], 1'b0};
       end
-
-      BLINK: begin
-        if (timer < TIMER_MAX) begin
-          timer <= timer + 1;
-        end else begin
-          timer <= 0;
-          led2  <= ~led2;
-          // count on the LED-on edge
-          if (~led2) begin
-            blink_count <= blink_count + 1;
-            if (blink_count + 1 == target_count)
-              state <= DONE;
-          end
-        end
-      end
-
-      DONE: begin
-        led2 <= 0;
-      end
-    endcase
-  end
-
-  // 4) Transmit logic: load only at CS start, shift on falling edge
-  reg [7:0] byte_data_sent;
-  always @(posedge clk) begin
-    if (SPI_CS_startmessage) begin
-      byte_data_sent <= blink_count;
     end
-    else if (SPI_CS_active && SPI_CLK_fallingedge) begin
-      byte_data_sent <= {byte_data_sent[6:0], 1'b0};
-    end
-  end
 
-  assign SPI_POCI = byte_data_sent[7];
+  assign SPI_POCI = byte_data_sent[31];
 
 endmodule

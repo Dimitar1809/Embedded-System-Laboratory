@@ -27,6 +27,8 @@ module tb_TopEntity;
   always #5 clk = ~clk;
 
   initial begin
+    $dumpfile("signals.vcd"); // Name of the signal dump file
+    $dumpvars(0, tb_TopEntity); // Dump all variables in this module
     // Initialize and settle synchronizers
     SPI_CLK  = 0;
     SPI_PICO = 0;
