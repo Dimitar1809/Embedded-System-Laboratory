@@ -114,7 +114,7 @@ int spiXfer(int fd, unsigned speed, char *txBuf, char *rxBuf, unsigned count) {
   spi.len = count;
   spi.speed_hz = speed;
   spi.delay_usecs = 0;
-  spi.bits_per_word = 32;
+  spi.bits_per_word = 8;
   spi.cs_change = 0;
 
   err = ioctl(fd, SPI_IOC_MESSAGE(1), &spi);
@@ -161,13 +161,20 @@ int main(int argc, char *argv[]) {
     return 1;
 
   for (i = 0; i < loops; i++) {
-    
+    uint32_t tx_word = (uint32_t)i;
+    uint32_t rx_word = 0;
 
-    TXBuf[0] = i;
-    printf("Sent %d \n",TXBuf[0]);
-    spiXfer(fd, speed, TXBuf, RXBuf, bytes);
-    printf("received: %d, %d\n", RXBuf[0], RXBuf[4]);
-  
+    // pack 32-bit word into TXBuf
+    memcpy(TXBuf, &tx_word, sizeof tx_word);
+
+    // transfer 4 bytes
+    spiXfer(fd, speed, TXBuf, RXBuf, sizeof tx_word);
+
+    // unpack returned 32-bit word
+    memcpy(&rx_word, RXBuf, sizeof rx_word);
+
+    // print as unsigned decimal
+    printf("transmit: %u, received: %u\n", tx_word, rx_word);
   }
 
   diff = time_time() - start;
