@@ -133,7 +133,7 @@ int loops = LOOPS;
 
 int main(int argc, char *argv[]) {
   int i, fd;
-  double start, diff, sps;
+  double start, diff;
 
   if (argc > 1)
     bytes = atoi(argv[1]);
@@ -159,12 +159,20 @@ int main(int argc, char *argv[]) {
 
   if (fd < 0)
     return 1;
+  
+  // keep track of swaping words
+  int slot = 0;
+  memset(TXBuf, 0, bytes);
 
   for (i = 0; i < loops; i++) {
-      TXBuf[0] = i;
 
     spiXfer(fd, speed, TXBuf, RXBuf, bytes);
-    printf(RXBuf);
+    uint8_t v = (uint8_t)RXBuf[slot];
+    v++;
+
+    memset(TXBuf, 0, bytes);
+    slot = (slot + 1) % bytes;
+    TXBuf[slot] = v;
   }
 
   diff = time_time() - start;
