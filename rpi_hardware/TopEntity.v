@@ -92,7 +92,10 @@ module TopEntity (
 
   always @(posedge clk)
     if (SPI_CS_active) begin
-      if (SPI_CS_startmessage) byte_data_sent <= {pitch_enc_counter, yaw_enc_counter};
+      if (SPI_CS_startmessage) byte_data_sent <= {
+        pitch_enc_counter[7:0], pitch_enc_counter[15:8],
+        yaw_enc_counter[7:0], yaw_enc_counter[15:8]
+      };
       else if (SPI_CLK_fallingedge) begin
         byte_data_sent <= {byte_data_sent[30:0], 1'b0};
       end

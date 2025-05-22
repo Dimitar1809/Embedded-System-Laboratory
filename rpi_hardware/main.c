@@ -17,7 +17,7 @@
 
 #define LOOPS 10000
 #define SPEED 1000
-#define BYTES 3
+#define BYTES 4
 
 double time_time(void) {
   struct timeval tv;
