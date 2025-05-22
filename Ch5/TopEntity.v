@@ -55,7 +55,7 @@ module TopEntity (
 
   always @(posedge clk)
     if (SPI_CS_active) begin
-      if (SPI_CS_startmessage) byte_data_sent <= last_received*2;
+      if (SPI_CS_startmessage) byte_data_sent <= last_received;
       else if (SPI_CLK_fallingedge) begin
         byte_data_sent <= {byte_data_sent[30:0], 1'b0};
       end
