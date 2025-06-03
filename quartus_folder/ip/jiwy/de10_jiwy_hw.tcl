@@ -39,11 +39,11 @@ add_fileset QUARTUS_SYNTH QUARTUS_SYNTH "" ""
 set_fileset_property QUARTUS_SYNTH TOP_LEVEL de10_top
 set_fileset_property QUARTUS_SYNTH ENABLE_RELATIVE_INCLUDE_PATHS false
 set_fileset_property QUARTUS_SYNTH ENABLE_FILE_OVERWRITE_MODE false
-add_fileset_file de10_top.v VERILOG PATH ip/jiwy/de10_top.v TOP_LEVEL_FILE
-add_fileset_file debouncer.v VERILOG PATH ip/jiwy/debouncer.v
-add_fileset_file jiwy.v VERILOG PATH ip/jiwy/jiwy.v
-add_fileset_file pwm_gen.v VERILOG PATH ip/jiwy/pwm_gen.v
-add_fileset_file quad_enc.v VERILOG PATH ip/jiwy/quad_enc.v
+add_fileset_file de10_top.v VERILOG PATH de10_top.v TOP_LEVEL_FILE
+add_fileset_file debouncer.v VERILOG PATH debouncer.v
+add_fileset_file jiwy.v VERILOG PATH jiwy.v
+add_fileset_file pwm_gen.v VERILOG PATH pwm_gen.v
+add_fileset_file quad_enc.v VERILOG PATH quad_enc.v
 
 
 # 

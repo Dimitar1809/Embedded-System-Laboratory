@@ -1,6 +1,6 @@
 module pwm_gen #(
     parameter FREQUENCY = 20000, // 20kHz
-    parameter CLOCK_FREQ = 100000000 // 100MHz
+    parameter CLOCK_FREQ = 50000000 
 ) (
     input clk,
     input reset,
