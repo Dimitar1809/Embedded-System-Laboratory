@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Model">
+      <UniqueIdentifier>{0e1293d7-6ccf-45b1-8b4b-1375f3d6aadd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Support">
+      <UniqueIdentifier>{c123e047-55b7-4459-a833-e70d0bb27392}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\xxmodel.c">
+      <Filter>Model</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xxfuncs.c">
+      <Filter>Support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xxinverse.c">
+      <Filter>Support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xxmatrix.c">
+      <Filter>Support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xxTable2D.c">
+      <Filter>Support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\MotionProfiles.c">
+      <Filter>Support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\EulerAngles.c">
+      <Filter>Support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PositionControllerPan.c">
+      <Filter>Model</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\xxmodel.h">
+      <Filter>Model</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xxfuncs.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xxmatrix.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\MotionProfiles.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\EulerAngles.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xxtypes.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xxTable2D.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
+

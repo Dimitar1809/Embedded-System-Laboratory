@@ -1,0 +1,20 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PositionControllerPan", "PositionControllerPan.vcxproj", "{A632FD8E-5FC2-4E0D-9B57-E0D38048770E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A632FD8E-5FC2-4E0D-9B57-E0D38048770E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A632FD8E-5FC2-4E0D-9B57-E0D38048770E}.Debug|Win32.Build.0 = Debug|Win32
+		{A632FD8E-5FC2-4E0D-9B57-E0D38048770E}.Release|Win32.ActiveCfg = Release|Win32
+		{A632FD8E-5FC2-4E0D-9B57-E0D38048770E}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
+
