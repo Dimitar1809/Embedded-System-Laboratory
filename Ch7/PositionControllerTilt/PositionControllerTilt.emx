@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document>
+  <Model version="4.2" build="4.2.5.2406">
+    <Sidops>
+<![CDATA[PositionControllerTilt 64 48
+ description '<Information>
+ <Description>
+    <LibraryPath>PositionControllerTilt.emx</LibraryPath>
+  <TimeStamp>2012-3-8 09:21:49</TimeStamp>
+  <Version>4.2</Version>
+  <IsMainModel>1</IsMainModel>
+</Description>
+</Information>';
+ type DynamicDLL
+  ports
+   signal in input[3];
+   signal out output[1];
+ end;
+ icon bg
+  figures
+   rectangle -35 -15 35 15 fill 15132390;
+   text 'PositionControllerTilt' 0 0 16;
+ end;
+ implementation eq
+/* PositionControllerTilt
+ 3 inputs:
+ 	"corr",
+	"in",
+	"position"
+
+ 1 outputs:
+ 	"out"
+
+*/
+
+equations
+	output = dlldynamic ('PositionControllerTilt.dll', 'SFunctionCalculate', input);
+implementation_end;
+]]>
+    </Sidops>
+  </Model>
+</Document>
+

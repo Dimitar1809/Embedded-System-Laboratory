@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document>
+  <Model version="4.2" build="4.2.5.2406">
+    <Sidops>
+<![CDATA[PositionControllerPan 64 48
+ description '<Information>
+ <Description>
+    <LibraryPath>PositionControllerPan.emx</LibraryPath>
+  <TimeStamp>2012-3-8 09:21:49</TimeStamp>
+  <Version>4.2</Version>
+  <IsMainModel>1</IsMainModel>
+</Description>
+</Information>';
+ type DynamicDLL
+  ports
+   signal in input[2];
+   signal out output[2];
+ end;
+ icon bg
+  figures
+   rectangle -35 -15 35 15 fill 15132390;
+   text 'PositionControllerPan' 0 0 16;
+ end;
+ implementation eq
+/* PositionControllerPan
+ 2 inputs:
+ 	"in",
+	"position"
+
+ 2 outputs:
+ 	"corr",
+	"out"
+
+*/
+
+equations
+	output = dlldynamic ('PositionControllerPan.dll', 'SFunctionCalculate', input);
+implementation_end;
+]]>
+    </Sidops>
+  </Model>
+</Document>
+
