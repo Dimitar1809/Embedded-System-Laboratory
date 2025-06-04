@@ -20,15 +20,15 @@
 
    XXDouble xx_variables[NUMBER_VARIABLES + NUMBER_ALIAS_VARIABLES + 1];
    XXString xx_variable_names[] = {
-     VARIABLE_NAMES, ALIAS_VARIABLE_NAMES, NULL
+	 VARIABLE_NAMES, ALIAS_VARIABLE_NAMES, NULL
    };
 
    and calculate them directly after the output equations:
 
    void XXCalculateOutput (void)
    {
-     OUTPUT_EQUATIONS
-     ALIAS_EQUATIONS
+	 OUTPUT_EQUATIONS
+	 ALIAS_EQUATIONS
    }
 */
 
@@ -52,8 +52,8 @@ XXBoolean tilt_xx_major = XXTRUE;
 XXBoolean tilt_xx_stop_simulation = XXFALSE;
 
 /* the variable arrays */
-XXDouble tilt_xx_P[tilt_xx_parameters_size];		/* parameters */
-XXDouble tilt_xx_I[tilt_xx_initialvalues_size];		/* initial values */
+XXDouble tilt_xx_P[tilt_xx_parameters_size];	/* parameters */
+XXDouble tilt_xx_I[tilt_xx_initialvalues_size]; /* initial values */
 XXDouble tilt_xx_V[tilt_xx_variables_size];		/* variables */
 XXDouble tilt_xx_s[tilt_xx_states_size];		/* states */
 XXDouble tilt_xx_R[tilt_xx_states_size];		/* rates (or new states) */
@@ -111,14 +111,13 @@ XXString xx_rate_names[] = {
 void tilt_XXModelInitialize_parameters(void)
 {
 	/* set the parameters */
-	tilt_xx_P[0] = 0.0;		/* corrGain\K */
-	tilt_xx_P[1] = 1.6;		/* PID1\kp */
-	tilt_xx_P[2] = 0.05;		/* PID1\tauD */
-	tilt_xx_P[3] = 0.001;		/* PID1\beta */
-	tilt_xx_P[4] = 10.5;		/* PID1\tauI */
-	tilt_xx_P[5] = -0.99;		/* SignalLimiter2\minimum */
-	tilt_xx_P[6] = 0.99;		/* SignalLimiter2\maximum */
-
+	tilt_xx_P[0] = 0.0;	  /* corrGain\K */
+	tilt_xx_P[1] = 0.8;	  /* PID1\kp */
+	tilt_xx_P[2] = 0.4;	  /* PID1\tauD */
+	tilt_xx_P[3] = 0.01;  /* PID1\beta */
+	tilt_xx_P[4] = 42;	  /* PID1\tauI */
+	tilt_xx_P[5] = -0.99; /* SignalLimiter2\minimum */
+	tilt_xx_P[6] = 0.99;  /* SignalLimiter2\maximum */
 }
 #if (7 > 8192) && defined _MSC_VER
 #pragma optimize("", on)
@@ -127,19 +126,17 @@ void tilt_XXModelInitialize_parameters(void)
 void tilt_XXModelInitialize_initialvalues(void)
 {
 	/* set the initial values */
-	tilt_xx_I[0] = 0.0;		/* PID1\uD_previous_initial */
-	tilt_xx_I[1] = 0.0;		/* PID1\error_previous_initial */
-	tilt_xx_I[2] = 0.0;		/* PID1\uI_previous_initial */
-
+	tilt_xx_I[0] = 0.0; /* PID1\uD_previous_initial */
+	tilt_xx_I[1] = 0.0; /* PID1\error_previous_initial */
+	tilt_xx_I[2] = 0.0; /* PID1\uI_previous_initial */
 }
 
 void tilt_XXModelInitialize_states(void)
 {
 	/* set the states */
-	tilt_xx_s[0] = tilt_xx_I[0];		/* PID1\uD_previous */
-	tilt_xx_s[1] = tilt_xx_I[1];		/* PID1\error_previous */
-	tilt_xx_s[2] = tilt_xx_I[2];		/* PID1\uI_previous */
-
+	tilt_xx_s[0] = tilt_xx_I[0]; /* PID1\uD_previous */
+	tilt_xx_s[1] = tilt_xx_I[1]; /* PID1\error_previous */
+	tilt_xx_s[2] = tilt_xx_I[2]; /* PID1\uI_previous */
 }
 
 void tilt_XXModelInitialize_variables(void)
@@ -149,7 +146,7 @@ void tilt_XXModelInitialize_variables(void)
 }
 
 /* this method is called before calculation is possible */
-void tilt_XXModelInitialize (void)
+void tilt_XXModelInitialize(void)
 {
 	tilt_XXModelInitialize_parameters();
 	tilt_XXModelInitialize_variables();
@@ -160,35 +157,33 @@ void tilt_XXModelInitialize (void)
 /* This function calculates the initial equations of the model.
  * These equations are calculated before anything else
  */
-void tilt_XXCalculateInitial (void)
+void tilt_XXCalculateInitial(void)
 {
 
 	/* set the states again, they might have changed in the initial calculation */
-	tilt_XXModelInitialize_states ();
+	tilt_XXModelInitialize_states();
 }
 
 /* This function calculates the static equations of the model.
  * These equations are only dependent from parameters and constants
  */
-void tilt_XXCalculateStatic (void)
+void tilt_XXCalculateStatic(void)
 {
-
 }
 
 /* This function calculates the input equations of the model.
  * These equations are dynamic equations that must not change
  * in calls from the integration method (like random and delay).
  */
-void tilt_XXCalculateInput (void)
+void tilt_XXCalculateInput(void)
 {
-
 }
 
 /* This function calculates the dynamic equations of the model.
  * These equations are called from the integration method
  * to calculate the new model rates (that are then integrated).
  */
-void tilt_XXCalculateDynamic (void)
+void tilt_XXCalculateDynamic(void)
 {
 	/* PID1\factor = 1 / (sampletime + PID1\tauD * PID1\beta); */
 	tilt_xx_V[3] = 1.0 / (tilt_xx_step_size + tilt_xx_P[2] * tilt_xx_P[3]);
@@ -221,20 +216,17 @@ void tilt_XXCalculateDynamic (void)
 	tilt_xx_V[4] = tilt_xx_V[1] + tilt_xx_V[2];
 
 	/* SignalLimiter2\output = if PlusMinus1\output < SignalLimiter2\minimum... ; */
-	tilt_xx_V[7] = ((tilt_xx_V[4] < tilt_xx_P[5]) ? 
-		/* SignalLimiter2\minimum */
-		tilt_xx_P[5]
-	:
-		/* if PlusMinus1\output > SignalLimiter2\maximum...  */
-		((tilt_xx_V[4] > tilt_xx_P[6]) ? 
-			/* SignalLimiter2\maximum */
-			tilt_xx_P[6]
-		:
-			/* PlusMinus1\output */
-			tilt_xx_V[4]
-		)
-	);
-
+	tilt_xx_V[7] = ((tilt_xx_V[4] < tilt_xx_P[5]) ?
+												  /* SignalLimiter2\minimum */
+						tilt_xx_P[5]
+												  :
+												  /* if PlusMinus1\output > SignalLimiter2\maximum...  */
+						((tilt_xx_V[4] > tilt_xx_P[6]) ?
+													   /* SignalLimiter2\maximum */
+							 tilt_xx_P[6]
+													   :
+													   /* PlusMinus1\output */
+							 tilt_xx_V[4]));
 
 	/* increment the step counter */
 	tilt_xx_steps++;
@@ -246,24 +238,21 @@ void tilt_XXCalculateDynamic (void)
  * These dynamic equations are called often more than one time for each
  * integration step that is taken. This makes model computation much faster.
  */
-void tilt_XXCalculateOutput (void)
+void tilt_XXCalculateOutput(void)
 {
 	/* out = SignalLimiter2\output; */
 	tilt_xx_V[11] = tilt_xx_V[7];
-
 }
 
 /* This function calculates the final equations of the model.
  * These equations are calculated after all the calculations
  * are performed
  */
-void tilt_XXCalculateFinal (void)
+void tilt_XXCalculateFinal(void)
 {
-
 }
 
 /* this method is called after all calculations are performed */
 void tilt_XXModelTerminate(void)
 {
 }
-

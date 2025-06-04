@@ -3,20 +3,23 @@
 uint16_t prev_yaw_count = UINT16_MAX;
 uint16_t prev_pitch_count = UINT16_MAX;
 
-uint16_t unwrapped_yaw_count;
-uint16_t unwrapped_pitch_count;
+int16_t unwrapped_yaw_count;
+int16_t unwrapped_pitch_count;
 double yaw_angle;
 double pitch_angle;
 
+double pwm_limiter_yaw = 0.5;   // Limit the maximum PWM value to prevent saturation
+double pwm_limiter_pitch = 0.1; // Limit the maximum PWM value to prevent saturation
+
 void send_pwm_signal(double pwm_value_yaw, double pwm_value_pitch)
 {
-
+    pwm_value_pitch = pwm_value_pitch * pwm_limiter_pitch;
     uint16_t duty_yaw = (uint16_t)(fabs(pwm_value_yaw) * PERIOD);
     uint8_t dir_yaw;
     if (pwm_value_yaw < 0)
-        dir_yaw = 1; // Reverse direction
+        dir_yaw = 2; // Reverse direction
     else
-        dir_yaw = 2; // Forward direction
+        dir_yaw = 1; // Forward direction
 
     uint16_t duty_pitch = (uint16_t)(fabs(pwm_value_pitch) * PERIOD);
     uint8_t dir_pitch;
@@ -33,10 +36,10 @@ void send_pwm_signal(double pwm_value_yaw, double pwm_value_pitch)
 void read_encoder_values(void)
 {
     uint32_t encoder_values = read_bus();
-    uint16_t yaw_count = (encoder_values >> 16) & 0xFFFFu;
-    uint16_t pitch_count = encoder_values & 0xFFFFu;
-    int16_t yaw_diff = yaw_count - prev_yaw_count;
-    int16_t pitch_diff = pitch_count - prev_pitch_count;
+    uint16_t pitch_count = (encoder_values >> 16) & 0xFFFFu;
+    uint16_t yaw_count = encoder_values & 0xFFFFu;
+    int16_t yaw_diff = prev_yaw_count - yaw_count;
+    int16_t pitch_diff = prev_pitch_count - pitch_count;
 
     prev_yaw_count = yaw_count;
     prev_pitch_count = pitch_count;
@@ -56,7 +59,6 @@ void read_encoder_values(void)
 
     yaw_angle = unwrapped_yaw_count * YAW_RAD_PER_COUNT;
     pitch_angle = unwrapped_pitch_count * PITCH_RAD_PER_COUNT;
-    printf("Yaw: %.2f rad, Pitch: %.2f rad\n", yaw_angle, pitch_angle);
 }
 
 void home(void)
@@ -64,8 +66,9 @@ void home(void)
     double prev_yaw_angle = 0;
     double prev_pitch_angle = 0;
     int stable_count = 0;
-    const int STABLE_THRESHOLD = 5;     // Number of consecutive readings with no change
-    const double PWM_HOME_SPEED = -0.2; // Negative for backwards direction
+    const int STABLE_THRESHOLD = 5;         // Number of consecutive readings with no change
+    const double PWM_HOME_SPEED_YAW = -1;   // Negative for backwards direction
+    const double PWM_HOME_SPEED_PITCH = -1; // Negative for backwards direction
 
     printf("Starting homing sequence...\n");
 
@@ -77,7 +80,7 @@ void home(void)
     while (stable_count < STABLE_THRESHOLD)
     {
         // Send PWM signal to move backwards
-        send_pwm_signal(PWM_HOME_SPEED, PWM_HOME_SPEED);
+        send_pwm_signal(PWM_HOME_SPEED_YAW, PWM_HOME_SPEED_PITCH);
 
         // Small delay to allow movement
         struct timespec delay = {.tv_sec = 0, .tv_nsec = 10000000}; // 10ms
@@ -117,7 +120,6 @@ void home(void)
 static volatile int keep_running = 1;
 void handle_sigint(int sig) { keep_running = 0; }
 
-
 int main(void)
 {
     init_bus();
@@ -125,7 +127,7 @@ int main(void)
     home();
 
     // Catch Ctrl+C
-    signal(SIGINT, handle_sigint); 
+    signal(SIGINT, handle_sigint);
 
     // Initialize the models once
     pan_XXModelInitialize();
@@ -135,8 +137,9 @@ int main(void)
     double desired_position_pan;
     double desired_position_tilt;
     printf("Enter desired pan position [rad] and tilt position [rad], separated by space: ");
-    if (scanf("%lf %lf", &desired_position_pan, &desired_position_tilt) != 2) {
-       fprintf(stderr, "Invalid input. Please enter two numbers. Exiting.\n");
+    if (scanf("%lf %lf", &desired_position_pan, &desired_position_tilt) != 2)
+    {
+        fprintf(stderr, "Invalid input. Please enter two numbers. Exiting.\n");
         return 1;
     }
 
@@ -148,8 +151,9 @@ int main(void)
 
     printf("\nStarting real-time control loop (Ctrl+C to stop)...\n\n");
 
-       // Real-time loop
-    while (keep_running) {
+    // Real-time loop
+    while (keep_running)
+    {
         // Read encoder values
         read_encoder_values();
 
@@ -159,7 +163,7 @@ int main(void)
         tilt_xx_V[9] = desired_position_tilt;
         tilt_xx_V[10] = pitch_angle; // tilt angle
 
-       // One control step
+        // One control step
         pan_XXCalculateDynamic();
         pan_XXCalculateOutput();
         tilt_XXCalculateDynamic();
@@ -168,16 +172,15 @@ int main(void)
         // Send PWM signal to motors
         send_pwm_signal(pan_xx_V[9], tilt_xx_V[11]);
         printf("Pan: %.2f rad, Tilt: %.2f rad, PWM Pan: %.2f, PWM Tilt: %.2f\n",
-        yaw_angle, pitch_angle,
-        pan_xx_V[9], tilt_xx_V[11]);
+               yaw_angle, pitch_angle,
+               pan_xx_V[9], tilt_xx_V[11]);
 
         // Sleep for fixed timestep
         nanosleep(&ts, NULL);
     }
-    
+
     // Cleanup
     cleanup_bus();
-    printf("\nTerminating control loop.\n")
+    printf("\nTerminating control loop.\n");
     return 0;
-
 }

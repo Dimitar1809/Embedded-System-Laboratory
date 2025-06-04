@@ -14,9 +14,9 @@ void send_pwm_signal(double pwm_value_yaw, double pwm_value_pitch)
     uint16_t duty_yaw = (uint16_t)(fabs(pwm_value_yaw) * PERIOD);
     uint8_t dir_yaw;
     if (pwm_value_yaw < 0)
-        dir_yaw = 1; // Reverse direction
+        dir_yaw = 2; // Reverse direction
     else
-        dir_yaw = 2; // Forward direction
+        dir_yaw = 1; // Forward direction
 
     uint16_t duty_pitch = (uint16_t)(fabs(pwm_value_pitch) * PERIOD);
     uint8_t dir_pitch;
