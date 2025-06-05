@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "motor_control.h": "c",
-        "avalon_bus.h": "c",
-        "soc_system.h": "c"
-    }
-}

@@ -81,11 +81,19 @@ module TopEntity (
   always @(posedge clk) byte_received <= SPI_CS_active && SPI_CLK_risingedge && (bitcnt == 5'b11111);
 
   reg [31:0] last_received;
+
+  wire [31:0] byte_swapped_data = {
+    byte_data_received[7:0],   // LSB becomes MSB
+    byte_data_received[15:8],
+    byte_data_received[23:16], 
+    byte_data_received[31:24]  // MSB becomes LSB
+  };
+
   always @(posedge clk) if (byte_received) begin
-    pitch_direction <= byte_data_received[1:0];
-    pitch_duty_cycle <= byte_data_received[15:2];
-    yaw_direction <= byte_data_received[17:16];
-    yaw_duty_cycle <= byte_data_received[31:18];
+    pitch_direction <= byte_swapped_data[1:0];
+    pitch_duty_cycle <= byte_swapped_data[15:2];
+    yaw_direction <= byte_swapped_data[17:16];
+    yaw_duty_cycle <= byte_swapped_data[31:18];
   end
 
   reg [31:0] byte_data_sent;
