@@ -1,0 +1,1 @@
+gcc combined/motor_control_with_control.c -Icombined/PositionControllerPan -Icombined/PositionControllerTilt -Icombined/spi_bus combined/PositionControllerPan/xxmodelPan.c combined/PositionControllerTilt/xxmodelTilt.c combined/spi_bus/spi_bus.c -o motor_control_with_control -lm
