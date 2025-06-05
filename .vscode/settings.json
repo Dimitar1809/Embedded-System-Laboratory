@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "motor_control.h": "c"
+        "motor_control.h": "c",
+        "spi_bus.h": "c"
     }
 }
