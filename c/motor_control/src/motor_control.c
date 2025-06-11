@@ -141,8 +141,8 @@ int main(void)
     tilt_XXModelInitialize();
 
     // Ask for desired positions
-    double desired_position_pan;
-    double desired_position_tilt;
+    double desired_position_pan = 0;
+    double desired_position_tilt = 0;
     // printf("Enter desired pan position [rad] and tilt position [rad], separated by space: ");
     // if (scanf("%lf %lf", &desired_position_pan, &desired_position_tilt) != 2)
     // {
@@ -194,6 +194,7 @@ int main(void)
 
     // Cleanup
     cleanup_bus();
+    image_processing_stop();
     printf("\nTerminating control loop.\n");
     return 0;
 }

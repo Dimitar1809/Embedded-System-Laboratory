@@ -8,7 +8,6 @@
 #include "image_processing.h"
 
 static pthread_t image_thread;
-static volatile int should_stop = 0;
 static GMainLoop *main_loop = NULL;
 
 // Global variables for ball tracking data
@@ -49,10 +48,33 @@ static int detect_green_ball(unsigned char *bgr_data, int width, int height, int
     return 0;
 }
 
+int get_ball_position(int *x, int *y)
+{
+    pthread_mutex_lock(&ball_data_mutex);
+    if (ball_detected && new_frame) {
+        *x = ball_x;
+        *y = ball_y;
+        new_frame = 0;  // Mark as read
+        pthread_mutex_unlock(&ball_data_mutex);
+        return 1;  // Ball found
+    }
+    pthread_mutex_unlock(&ball_data_mutex);
+    return 0;  // No ball
+}
+
+int has_new_frame()
+{
+    pthread_mutex_lock(&ball_data_mutex);
+    int result = new_frame;
+    pthread_mutex_unlock(&ball_data_mutex);
+    return result;
+}
+
 /* Called whenever the GStreamer bus posts an error or EOS. */
 static gboolean
 bus_call(GstBus *bus, GstMessage *msg, gpointer data)
 {
+    (void)bus;  // Unused parameter
     GMainLoop *loop = (GMainLoop *)data;
     switch (GST_MESSAGE_TYPE(msg)) {
         case GST_MESSAGE_EOS:
@@ -75,18 +97,8 @@ bus_call(GstBus *bus, GstMessage *msg, gpointer data)
     return TRUE;
 }
 
-/* Called when user hits “Enter” in the terminal: send an EOS event to the pipeline. */
-static gboolean
-on_keyboard(GIOChannel *source, GIOCondition cond, gpointer data)
-{
-    GstElement *pipeline = (GstElement *)data;
-    gst_element_send_event(pipeline, gst_event_new_eos());
-    return FALSE;  // remove this watch
-}
-
-
 static GstFlowReturn
-on_new_sample(GstAppSink *appsink, gpointer user_data)
+on_new_sample(GstAppSink *appsink)
 {
     GstSample *sample = gst_app_sink_pull_sample(appsink);
     if (!sample)
@@ -117,30 +129,10 @@ on_new_sample(GstAppSink *appsink, gpointer user_data)
     return GST_FLOW_OK;
 }
 
-int get_ball_position(int *x, int *y)
-{
-    pthread_mutex_lock(&ball_data_mutex);
-    if (ball_detected && new_frame) {
-        *x = ball_x;
-        *y = ball_y;
-        new_frame = 0;  // Mark as read
-        pthread_mutex_unlock(&ball_data_mutex);
-        return 1;  // Ball found
-    }
-    pthread_mutex_unlock(&ball_data_mutex);
-    return 0;  // No ball
-}
-
-int has_new_frame()
-{
-    pthread_mutex_lock(&ball_data_mutex);
-    int result = new_frame;
-    pthread_mutex_unlock(&ball_data_mutex);
-    return result;
-}
 
 
-static void image_processing_thread(void* arg)
+
+static void* image_processing_thread()
 {
     GstElement *pipeline, *src, *capfilter, *dec, *convert, *appsink;
     GstBus *bus;
@@ -159,7 +151,7 @@ static void image_processing_thread(void* arg)
 
     if (!pipeline || !src || !capfilter || !dec || !convert || !appsink) {
         g_printerr("Failed to create one of the GStreamer elements.\n");
-        return -1;
+        return NULL;
     }
 
     // 2) Configure the v4l2src and capsfilter so that we get 320×240@30fps JPEG,
@@ -193,7 +185,7 @@ static void image_processing_thread(void* arg)
 
     if (!gst_element_link_many(src, capfilter, dec, convert, appsink, NULL)) {
         g_printerr("Failed to link src→capfilter→dec→convert→appsink\n");
-        return -1;
+        return NULL;
     }
 
     // 4) Connect appsink’s “new-sample” signal to our callback
@@ -207,10 +199,6 @@ static void image_processing_thread(void* arg)
     bus_watch_id = gst_bus_add_watch(bus, bus_call, main_loop);
     gst_object_unref(bus);
 
-    // 7) Watch keyboard so that “Enter” → pipeline EOS
-    GIOChannel *io_stdin = g_io_channel_unix_new(fileno(stdin));
-    g_io_add_watch(io_stdin, G_IO_IN, on_keyboard, pipeline);
-
     // 8) Start playback
     g_print("Streaming from webcam... press [Enter] to stop.\n");
     gst_element_set_state(pipeline, GST_STATE_PLAYING);
@@ -223,7 +211,7 @@ static void image_processing_thread(void* arg)
     g_source_remove(bus_watch_id);
     g_main_loop_unref(main_loop);
 
-    return 0;
+    return NULL;
 }
 
 // Start the image processing thread
@@ -242,8 +230,6 @@ int image_processing_start()
 // Stop the image processing thread
 int image_processing_stop()
 {
-    should_stop = 1;
-    
     // Signal the main loop to quit
     if (main_loop) {
         g_main_loop_quit(main_loop);
@@ -253,10 +239,4 @@ int image_processing_stop()
     pthread_join(image_thread, NULL);
     
     return 0;
-}
-
-// Check if image processing is running
-int image_processing_is_running()
-{
-    return (main_loop != NULL && g_main_loop_is_running(main_loop));
 }
