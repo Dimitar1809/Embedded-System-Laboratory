@@ -124,6 +124,13 @@ int main(void)
 {
     init_bus();
 
+    printf("starting image processing...\n");
+    if (image_processing_start() != 0)
+    {
+        fprintf(stderr, "Failed to start image processing. Exiting.\n");
+        return 1;
+    }
+
     home();
 
     // Catch Ctrl+C
@@ -136,12 +143,12 @@ int main(void)
     // Ask for desired positions
     double desired_position_pan;
     double desired_position_tilt;
-    printf("Enter desired pan position [rad] and tilt position [rad], separated by space: ");
-    if (scanf("%lf %lf", &desired_position_pan, &desired_position_tilt) != 2)
-    {
-        fprintf(stderr, "Invalid input. Please enter two numbers. Exiting.\n");
-        return 1;
-    }
+    // printf("Enter desired pan position [rad] and tilt position [rad], separated by space: ");
+    // if (scanf("%lf %lf", &desired_position_pan, &desired_position_tilt) != 2)
+    // {
+    //     fprintf(stderr, "Invalid input. Please enter two numbers. Exiting.\n");
+    //     return 1;
+    // }
 
     // Prepare fixed timestep sleep
     struct timespec ts;
@@ -154,10 +161,16 @@ int main(void)
     // Real-time loop
     while (keep_running)
     {
-        // Read encoder values
+
+        int ball_x, ball_y;
+    
+        if (has_new_frame() && get_ball_position(&ball_x, &ball_y)) {
+            printf("Ball at (%d, %d)\n", ball_x, ball_y);
+        }
+
         read_encoder_values();
 
-        // feed the model inputs
+        // Feed the model inputs
         pan_xx_V[7] = desired_position_pan;
         pan_xx_V[8] = yaw_angle; // pan angle
         tilt_xx_V[9] = desired_position_tilt;
@@ -171,9 +184,9 @@ int main(void)
 
         // Send PWM signal to motors
         send_pwm_signal(pan_xx_V[9], tilt_xx_V[11]);
-        printf("Pan: %.2f rad, Tilt: %.2f rad, PWM Pan: %.2f, PWM Tilt: %.2f\n",
-               yaw_angle, pitch_angle,
-               pan_xx_V[9], tilt_xx_V[11]);
+        // printf("Pan: %.2f rad, Tilt: %.2f rad, PWM Pan: %.2f, PWM Tilt: %.2f\n",
+        //        yaw_angle, pitch_angle,
+        //        pan_xx_V[9], tilt_xx_V[11]);
 
         // Sleep for fixed timestep
         nanosleep(&ts, NULL);

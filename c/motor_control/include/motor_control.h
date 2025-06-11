@@ -12,6 +12,7 @@
 #include "xxmodelPan.h"
 #include "xxmodelTilt.h"
 #include "bus_interface.h"
+#include "image_processing.h"
 
 #ifndef MOTOR_CONTROL_H
 #define MOTOR_CONTROL_H

@@ -1,0 +1,262 @@
+#include <gst/gst.h>
+#include <gst/app/gstappsink.h>
+#include <glib.h>
+#include <gio/gio.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include "image_processing.h"
+
+static pthread_t image_thread;
+static volatile int should_stop = 0;
+static GMainLoop *main_loop = NULL;
+
+// Global variables for ball tracking data
+static volatile int ball_x = -1;
+static volatile int ball_y = -1;
+static volatile int ball_detected = 0;
+static volatile int new_frame = 0;
+static pthread_mutex_t ball_data_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Simple green ball detection
+static int detect_green_ball(unsigned char *bgr_data, int width, int height, int *x, int *y)
+{
+    int center_x = 0, center_y = 0;
+    int pixel_count = 0;
+    
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            int idx = (row * width + col) * 3;
+            unsigned char b = bgr_data[idx];
+            unsigned char g = bgr_data[idx + 1];
+            unsigned char r = bgr_data[idx + 2];
+
+            // Simple green detection
+            if (g > r + 20 && g > b + 20) {
+                center_x += col;
+                center_y += row;
+                pixel_count++;
+            }
+        }
+    }
+    printf("Detected %d green pixels\n", pixel_count);
+    if (pixel_count > 50) {
+        *x = center_x / pixel_count;
+        *y = center_y / pixel_count;
+        return 1;
+    }
+    
+    return 0;
+}
+
+/* Called whenever the GStreamer bus posts an error or EOS. */
+static gboolean
+bus_call(GstBus *bus, GstMessage *msg, gpointer data)
+{
+    GMainLoop *loop = (GMainLoop *)data;
+    switch (GST_MESSAGE_TYPE(msg)) {
+        case GST_MESSAGE_EOS:
+            g_print("End of stream\n");
+            g_main_loop_quit(loop);
+            break;
+        case GST_MESSAGE_ERROR: {
+            GError *error;
+            gchar *debug;
+            gst_message_parse_error(msg, &error, &debug);
+            g_printerr("GStreamer Error: %s\n", error->message);
+            g_error_free(error);
+            g_free(debug);
+            g_main_loop_quit(loop);
+            break;
+        }
+        default:
+            break;
+    }
+    return TRUE;
+}
+
+/* Called when user hits “Enter” in the terminal: send an EOS event to the pipeline. */
+static gboolean
+on_keyboard(GIOChannel *source, GIOCondition cond, gpointer data)
+{
+    GstElement *pipeline = (GstElement *)data;
+    gst_element_send_event(pipeline, gst_event_new_eos());
+    return FALSE;  // remove this watch
+}
+
+
+static GstFlowReturn
+on_new_sample(GstAppSink *appsink, gpointer user_data)
+{
+    GstSample *sample = gst_app_sink_pull_sample(appsink);
+    if (!sample)
+        return GST_FLOW_ERROR;  // EOS or error
+
+    GstBuffer *buffer = gst_sample_get_buffer(sample);
+    GstMapInfo map;
+    if (!gst_buffer_map(buffer, &map, GST_MAP_READ)) {
+        gst_sample_unref(sample);
+        return GST_FLOW_ERROR;
+    }
+
+    // Process the image
+    int detected_x = -1, detected_y = -1;
+    int detected = detect_green_ball(map.data, 320, 240, &detected_x, &detected_y);
+    
+    // Update global variables with thread safety
+    pthread_mutex_lock(&ball_data_mutex);
+    ball_x = detected_x;
+    ball_y = detected_y;
+    ball_detected = detected;
+    new_frame = 1;
+    pthread_mutex_unlock(&ball_data_mutex);
+
+    // Cleanup
+    gst_buffer_unmap(buffer, &map);
+    gst_sample_unref(sample);
+    return GST_FLOW_OK;
+}
+
+int get_ball_position(int *x, int *y)
+{
+    pthread_mutex_lock(&ball_data_mutex);
+    if (ball_detected && new_frame) {
+        *x = ball_x;
+        *y = ball_y;
+        new_frame = 0;  // Mark as read
+        pthread_mutex_unlock(&ball_data_mutex);
+        return 1;  // Ball found
+    }
+    pthread_mutex_unlock(&ball_data_mutex);
+    return 0;  // No ball
+}
+
+int has_new_frame()
+{
+    pthread_mutex_lock(&ball_data_mutex);
+    int result = new_frame;
+    pthread_mutex_unlock(&ball_data_mutex);
+    return result;
+}
+
+
+static void image_processing_thread(void* arg)
+{
+    GstElement *pipeline, *src, *capfilter, *dec, *convert, *appsink;
+    GstBus *bus;
+    guint bus_watch_id;
+    GstCaps *caps;
+
+    gst_init(NULL, NULL);
+
+    // 1) Create all elements
+    pipeline  = gst_pipeline_new("video-capture-pipeline");
+    src       = gst_element_factory_make("v4l2src",   "src");
+    capfilter = gst_element_factory_make("capsfilter","caps");
+    dec       = gst_element_factory_make("jpegdec",   "decoder");
+    convert   = gst_element_factory_make("videoconvert","converter");
+    appsink   = gst_element_factory_make("appsink",   "app_sink");
+
+    if (!pipeline || !src || !capfilter || !dec || !convert || !appsink) {
+        g_printerr("Failed to create one of the GStreamer elements.\n");
+        return -1;
+    }
+
+    // 2) Configure the v4l2src and capsfilter so that we get 320×240@30fps JPEG,
+    //    then decode to raw BGR via videoconvert → appsink:
+    g_object_set(src, "device", "/dev/video0", NULL);
+
+    caps = gst_caps_from_string("image/jpeg,width=320,height=240,framerate=30/1");
+    g_object_set(capfilter, "caps", caps, NULL);
+    gst_caps_unref(caps);
+
+    // Tell appsink we want raw BGR frames at exactly 320×240:
+    caps = gst_caps_from_string(
+        "video/x-raw, "
+        "format=BGR, "
+        "width=320, "
+        "height=240"
+    );
+    g_object_set(appsink,
+                 "caps", caps,
+                 "emit-signals", TRUE,
+                 "sync", FALSE,
+                 "drop", TRUE,
+                 "max-buffers", 1,
+                 NULL);
+    gst_caps_unref(caps);
+
+    // 3) Build the pipeline:
+    //    src → capfilter → jpegdec → videoconvert → appsink
+    gst_bin_add_many(GST_BIN(pipeline),
+                     src, capfilter, dec, convert, appsink, NULL);
+
+    if (!gst_element_link_many(src, capfilter, dec, convert, appsink, NULL)) {
+        g_printerr("Failed to link src→capfilter→dec→convert→appsink\n");
+        return -1;
+    }
+
+    // 4) Connect appsink’s “new-sample” signal to our callback
+    g_signal_connect(appsink, "new-sample", G_CALLBACK(on_new_sample), NULL);
+
+    // 5) Create a GLib main loop
+    main_loop = g_main_loop_new(NULL, FALSE);
+
+    // 6) Watch the bus for errors/EOS
+    bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+    bus_watch_id = gst_bus_add_watch(bus, bus_call, main_loop);
+    gst_object_unref(bus);
+
+    // 7) Watch keyboard so that “Enter” → pipeline EOS
+    GIOChannel *io_stdin = g_io_channel_unix_new(fileno(stdin));
+    g_io_add_watch(io_stdin, G_IO_IN, on_keyboard, pipeline);
+
+    // 8) Start playback
+    g_print("Streaming from webcam... press [Enter] to stop.\n");
+    gst_element_set_state(pipeline, GST_STATE_PLAYING);
+    g_main_loop_run(main_loop);
+
+    // 9) Clean up when EOS or Ctrl+C
+    g_print("Stopping playback...\n");
+    gst_element_set_state(pipeline, GST_STATE_NULL);
+    gst_object_unref(pipeline);
+    g_source_remove(bus_watch_id);
+    g_main_loop_unref(main_loop);
+
+    return 0;
+}
+
+// Start the image processing thread
+int image_processing_start()
+{
+    if (pthread_create(&image_thread, NULL, image_processing_thread, NULL) != 0) {
+        g_printerr("Failed to create image processing thread\n");
+        return -1;
+    }
+    
+    // Give the thread a moment to start
+    usleep(100000); // 100ms
+    return 0;
+}
+
+// Stop the image processing thread
+int image_processing_stop()
+{
+    should_stop = 1;
+    
+    // Signal the main loop to quit
+    if (main_loop) {
+        g_main_loop_quit(main_loop);
+    }
+    
+    // Wait for thread to finish
+    pthread_join(image_thread, NULL);
+    
+    return 0;
+}
+
+// Check if image processing is running
+int image_processing_is_running()
+{
+    return (main_loop != NULL && g_main_loop_is_running(main_loop));
+}

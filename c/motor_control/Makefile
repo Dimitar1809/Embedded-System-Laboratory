@@ -4,11 +4,19 @@ BUS ?= $(TARGET)
 
 # Compiler settings
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -Iinclude -IPositionControllerPan -IPositionControllerTilt
-LDFLAGS = 
+CFLAGS = -Wall -Wextra -Iinclude -IPositionControllerPan -IPositionControllerTilt
+LDFLAGS = -lpthread
+
+# GStreamer flags
+GSTREAMER_CFLAGS = $(shell pkg-config --cflags gstreamer-1.0 gstreamer-app-1.0 glib-2.0)
+GSTREAMER_LIBS = $(shell pkg-config --libs gstreamer-1.0 gstreamer-app-1.0 glib-2.0)
+
+# Add GStreamer flags to compiler and linker
+CFLAGS += $(GSTREAMER_CFLAGS)
+LDFLAGS += $(GSTREAMER_LIBS)
 
 # Source files
-COMMON_SOURCES = src/motor_control.c PositionControllerPan/xxmodelPan.c PositionControllerTilt/xxmodelTilt.c
+COMMON_SOURCES = src/motor_control.c src/image_processing.c PositionControllerPan/xxmodelPan.c PositionControllerTilt/xxmodelTilt.c
 
 # Bus implementation selection (use spaces, not tabs)
 ifeq ($(BUS), spi)
