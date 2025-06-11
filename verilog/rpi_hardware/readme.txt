@@ -6,5 +6,5 @@ icepack ice40.asc ice40.bin
 
 sudo modprobe spi-bcm2835 -r
 ./icoprog/icoprog -R
-./icoprog/icoprog -p < ice40.bin
+./icoprog/icoprog -p < icoprog/ice40.bin
 sudo modprobe spi-bcm2835

@@ -1,6 +1,13 @@
-#include "spi_bus.h"
+#include "bus_interface.h"
+#include <fcntl.h>        // for open()
+#include <unistd.h>       // for close()
+#include <stdio.h>        // for sprintf()
+#include <string.h>       // for memset(), memcpy()
+#include <sys/ioctl.h>    // for ioctl()
+#include <linux/spi/spidev.h>
+#include <linux/types.h>
 
-int speed = 100000; // Default speed
+int speed = 1000000; // Default speed
 int fd = -1;
 
 #define MAX_SPI_BUFSIZ 8192
@@ -16,7 +23,7 @@ int init_bus(void)
     char spiBits;
     char dev[32];
 
-    spiMode = (0 & 3) | SPI_LSB_FIRST;
+    spiMode = (0 & 3);
     spiBits = 8;
 
     sprintf(dev, "/dev/spidev0.%d", spiChan);

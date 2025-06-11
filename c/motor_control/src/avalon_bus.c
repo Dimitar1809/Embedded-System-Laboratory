@@ -1,4 +1,14 @@
-#include "avalon_bus.h"
+#include "bus_interface.h"
+#include "soc_system.h"
+#include <fcntl.h>        // for open(), O_RDWR, O_SYNC
+#include <sys/mman.h>     // for mmap(), munmap(), MAP_SHARED, MAP_FAILED, PROT_READ, PROT_WRITE
+#include <unistd.h>       // for close()
+#include <stdio.h>        // for perror()
+#include <stdint.h>       // for uint32_t (though this comes from bus_interface.h)
+
+
+static void *map;
+static int fd = -1;
 
 int init_bus(void)
 {

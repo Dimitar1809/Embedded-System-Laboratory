@@ -4,13 +4,13 @@
 *.zip
 *.out
 assignment-files/
-src/
 .qsys_edit/
 db/
 *.qpf
 *.qsf
 *.qsys
 *.bak
+*.o
 /quartus_folder/simulation/
 /quartus_folder/analysis/
 /quartus_folder/soc_system/

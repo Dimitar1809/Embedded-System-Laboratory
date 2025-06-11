@@ -1,6 +1,15 @@
 {
     "files.associations": {
         "motor_control.h": "c",
-        "spi_bus.h": "c"
+        "spi_bus.h": "c",
+        "stdint.h": "c"
+    },
+    "files.insertFinalNewline": true,
+    "editor.insertSpaces": false,
+    "editor.detectIndentation": false,
+    "editor.tabSize": 8,
+    "[makefile]": {
+        "editor.insertSpaces": false,
+        "editor.detectIndentation": false
     }
 }
