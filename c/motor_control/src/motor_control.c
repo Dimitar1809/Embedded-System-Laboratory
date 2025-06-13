@@ -116,6 +116,33 @@ void home(void)
     printf("Homing complete. Motors at home position.\n");
 }
 
+void position_to_angle(uint16_t x, uint16_t y, double *desired_angle_x, double *desired_angle_y) {
+    //Image dimensions
+    const double img_w = 320.0;        // width in px
+    const double img_h = 240.0;        // height in px
+    const double deg_rad = M_PI/180.0; // degrees to radians conversion factor
+    const double FOV = 55.0 * deg_rad; // field of view in degrees
+    const double ar = img_w / img_h;   // 
+
+    // Compute horizontal & vertical FoV from diagonal FoV
+    const double hFOV = 2.0 * atan( tan(FOV/2.0) * (ar / sqrt(1 + ar*ar)) );
+    const double vFOV = 2.0 * atan( tan(FOV/2.0) * (1.0/    sqrt(1 + ar*ar)) );
+
+    // Pixel offsets from center
+    const double dx = x - (img_w / 2.0); // + right
+    const double dy = y - (img_h / 2.0); // + up (invert Y if needed)
+    
+    // Radians per pixel
+    const double rad_per_px_x = hFOV / img_w;
+    const double rad_per_px_y = vFOV / img_h;
+
+    double angle_x = dx * rad_per_px_x; // pan 
+    double angle_y = dy * rad_per_px_y; // tilt
+    printf("Converted angles, pan: %f, tilt: %f)\n", angle_x, angle_y);
+    *desired_angle_x = angle_x; // Store pan angle
+    *desired_angle_y = angle_y; // Store tilt angle
+}
+
 // Rerequired to prompt the user for desired angle
 static volatile int keep_running = 1;
 void handle_sigint(int sig) { keep_running = 0; }
@@ -166,6 +193,7 @@ int main(void)
     
         if (has_new_frame() && get_ball_position(&ball_x, &ball_y)) {
             printf("Ball at (%d, %d)\n", ball_x, ball_y);
+	    position_to_angle(ball_x, ball_y, &desired_position_pan, &desired_position_tilt);
         }
 
         read_encoder_values();

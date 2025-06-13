@@ -11,6 +11,7 @@ static pthread_t image_thread;
 static GMainLoop *main_loop = NULL;
 
 // Global variables for ball tracking data
+static int threshold = 30;  // Threshold for green detection, can be adjusted
 static volatile int ball_x = -1;
 static volatile int ball_y = -1;
 static volatile int ball_detected = 0;
@@ -31,7 +32,7 @@ static int detect_green_ball(unsigned char *bgr_data, int width, int height, int
             unsigned char r = bgr_data[idx + 2];
 
             // Simple green detection
-            if (g > r + 20 && g > b + 20) {
+            if (g > r + threshold && g > b + threshold) {
                 center_x += col;
                 center_y += row;
                 pixel_count++;

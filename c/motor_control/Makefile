@@ -5,7 +5,7 @@ BUS ?= $(TARGET)
 # Compiler settings
 CC = gcc
 CFLAGS = -Wall -Wextra -Iinclude -IPositionControllerPan -IPositionControllerTilt
-LDFLAGS = -lpthread
+LDFLAGS = -lpthread -lm
 
 # GStreamer flags
 GSTREAMER_CFLAGS = $(shell pkg-config --cflags gstreamer-1.0 gstreamer-app-1.0 glib-2.0)
