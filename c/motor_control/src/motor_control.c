@@ -1,5 +1,11 @@
 #include "motor_control.h"
 
+#define IMAGE_WIDTH 320
+#define IMAGE_HEIGHT 240
+#define FOV (55 * M_PI / 180.0) // Field of view in radians
+#define HFOV (45 * M_PI / 180.0) // Horizontal field of view in radians
+#define VFOV (34 * M_PI / 180.0) // Vertical field of view in radians
+
 uint16_t prev_yaw_count = UINT16_MAX;
 uint16_t prev_pitch_count = UINT16_MAX;
 
@@ -7,6 +13,9 @@ int16_t unwrapped_yaw_count;
 int16_t unwrapped_pitch_count;
 double yaw_angle;
 double pitch_angle;
+
+double tau_pan = 0.2;  // Time constant for pan (adjust as needed)
+double tau_tilt = 0.2;
 
 double pwm_limiter_yaw = 0.5;   // Limit the maximum PWM value to prevent saturation
 double pwm_limiter_pitch = 0.1; // Limit the maximum PWM value to prevent saturation
@@ -36,8 +45,8 @@ void send_pwm_signal(double pwm_value_yaw, double pwm_value_pitch)
 void read_encoder_values(void)
 {
     uint32_t encoder_values = read_bus();
-    uint16_t pitch_count = (encoder_values >> 16) & 0xFFFFu;
-    uint16_t yaw_count = encoder_values & 0xFFFFu;
+    uint16_t yaw_count = (encoder_values >> 16) & 0xFFFFu;
+    uint16_t pitch_count = encoder_values & 0xFFFFu;
     int16_t yaw_diff = prev_yaw_count - yaw_count;
     int16_t pitch_diff = prev_pitch_count - pitch_count;
 
@@ -71,6 +80,7 @@ void home(void)
     const double PWM_HOME_SPEED_PITCH = -1; // Negative for backwards direction
 
     printf("Starting homing sequence...\n");
+    printf("FOV around the center: %.2f rad (horizontal), %.2f rad (vertical)\n", HFOV, VFOV);
 
     // Read initial encoder values
     read_encoder_values();
@@ -116,31 +126,15 @@ void home(void)
     printf("Homing complete. Motors at home position.\n");
 }
 
-void position_to_angle(uint16_t x, uint16_t y, double *desired_angle_x, double *desired_angle_y) {
-    //Image dimensions
-    const double img_w = 320.0;        // width in px
-    const double img_h = 240.0;        // height in px
-    const double deg_rad = M_PI/180.0; // degrees to radians conversion factor
-    const double FOV = 55.0 * deg_rad; // field of view in degrees
-    const double ar = img_w / img_h;   // 
-
-    // Compute horizontal & vertical FoV from diagonal FoV
-    const double hFOV = 2.0 * atan( tan(FOV/2.0) * (ar / sqrt(1 + ar*ar)) );
-    const double vFOV = 2.0 * atan( tan(FOV/2.0) * (1.0/    sqrt(1 + ar*ar)) );
-
-    // Pixel offsets from center
-    const double dx = x - (img_w / 2.0); // + right
-    const double dy = y - (img_h / 2.0); // + up (invert Y if needed)
-    
-    // Radians per pixel
-    const double rad_per_px_x = hFOV / img_w;
-    const double rad_per_px_y = vFOV / img_h;
-
-    double angle_x = dx * rad_per_px_x; // pan 
-    double angle_y = dy * rad_per_px_y; // tilt
-    printf("Converted angles, pan: %f, tilt: %f)\n", angle_x, angle_y);
-    *desired_angle_x = angle_x; // Store pan angle
-    *desired_angle_y = angle_y; // Store tilt angle
+void position_to_angle(uint16_t x, uint16_t y, double *dx_angle, double *dy_angle) {
+    int pixel_error_x = x - (IMAGE_WIDTH / 2); // X_CENTER is the center of the image in pixels
+    int pixel_error_y = y - (IMAGE_HEIGHT / 2); // Y_CENTER is the center of the image in pixels
+    double angular_error_x = (double) pixel_error_x / IMAGE_WIDTH * HFOV;
+    double angular_error_y = (double) pixel_error_y / IMAGE_HEIGHT * VFOV;
+    printf("Pixel error, x: %d, y: %d\n", pixel_error_x, pixel_error_y);
+    printf("Angular error, x: %f, y: %f\n", angular_error_x, angular_error_y);
+    *dx_angle = angular_error_x;
+    *dy_angle = angular_error_y;
 }
 
 // Rerequired to prompt the user for desired angle
@@ -170,6 +164,8 @@ int main(void)
     // Ask for desired positions
     double desired_position_pan = 0;
     double desired_position_tilt = 0;
+    double desired_position_pan_smoothed = 0.0;
+    double desired_position_tilt_smoothed = 0.0;
     // printf("Enter desired pan position [rad] and tilt position [rad], separated by space: ");
     // if (scanf("%lf %lf", &desired_position_pan, &desired_position_tilt) != 2)
     // {
@@ -190,18 +186,38 @@ int main(void)
     {
 
         int ball_x, ball_y;
-    
         if (has_new_frame() && get_ball_position(&ball_x, &ball_y)) {
             printf("Ball at (%d, %d)\n", ball_x, ball_y);
-	    position_to_angle(ball_x, ball_y, &desired_position_pan, &desired_position_tilt);
+            double dx_angle, dy_angle;
+            position_to_angle(ball_x, ball_y, &dx_angle, &dy_angle);
+            desired_position_pan += dx_angle; // Update desired pan position
+            desired_position_tilt += dy_angle; // Update desired tilt position
+            // Ensure desired positions are within limits
+            if (desired_position_pan <  0) desired_position_pan = 0;
+            if (desired_position_pan > M_PI) desired_position_pan = M_PI;
+            if (desired_position_tilt < 0) desired_position_tilt = 0;
+            if (desired_position_tilt > 2.79) desired_position_tilt = 2.79;
+
+            // Smooth the desired positions using a first-order low-pass filter
+            double theta_z_dot_pan = (1.0 / tau_pan) * (desired_position_pan - desired_position_pan_smoothed);
+            desired_position_pan_smoothed += dt * theta_z_dot_pan;
+
+            double theta_z_dot_tilt = (1.0 / tau_tilt) * (desired_position_tilt - desired_position_tilt_smoothed);
+            desired_position_tilt_smoothed += dt * theta_z_dot_tilt;
+
+            printf("Desired pan position: %.2f rad, Desired tilt position: %.2f rad\n",
+                   desired_position_pan_smoothed, desired_position_tilt_smoothed);
+            printf("Pan: %.2f rad, Tilt: %.2f rad, PWM Pan: %.2f, PWM Tilt: %.2f\n",
+               yaw_angle, pitch_angle,
+               pan_xx_V[9], tilt_xx_V[11]);
         }
 
         read_encoder_values();
 
         // Feed the model inputs
-        pan_xx_V[7] = desired_position_pan;
+        pan_xx_V[7] = desired_position_pan_smoothed;
         pan_xx_V[8] = yaw_angle; // pan angle
-        tilt_xx_V[9] = desired_position_tilt;
+        tilt_xx_V[9] = desired_position_tilt_smoothed;
         tilt_xx_V[10] = pitch_angle; // tilt angle
 
         // One control step
@@ -212,9 +228,7 @@ int main(void)
 
         // Send PWM signal to motors
         send_pwm_signal(pan_xx_V[9], tilt_xx_V[11]);
-        // printf("Pan: %.2f rad, Tilt: %.2f rad, PWM Pan: %.2f, PWM Tilt: %.2f\n",
-        //        yaw_angle, pitch_angle,
-        //        pan_xx_V[9], tilt_xx_V[11]);
+        
 
         // Sleep for fixed timestep
         nanosleep(&ts, NULL);
