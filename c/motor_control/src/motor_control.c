@@ -1,13 +1,18 @@
 #include "motor_control.h"
 
+
 #define IMAGE_WIDTH 320
 #define IMAGE_HEIGHT 240
 #define FOV (55 * M_PI / 180.0) // Field of view in radians
 #define HFOV (45 * M_PI / 180.0) // Horizontal field of view in radians
 #define VFOV (34 * M_PI / 180.0) // Vertical field of view in radians
 
+#define MAX_RUNS 10000
+#define NOMINAL_SEC = 0
+#define NOMINAL_NSEC = 100000000 // 0.01 sec
 uint16_t prev_yaw_count = UINT16_MAX;
 uint16_t prev_pitch_count = UINT16_MAX;
+
 
 int16_t unwrapped_yaw_count;
 int16_t unwrapped_pitch_count;
@@ -18,7 +23,7 @@ double tau_pan = 0.2;  // Time constant for pan (adjust as needed)
 double tau_tilt = 0.2;
 
 double pwm_limiter_yaw = 0.5;   // Limit the maximum PWM value to prevent saturation
-double pwm_limiter_pitch = 0.1; // Limit the maximum PWM value to prevent saturation
+double pwm_limiter_pitch = 0.03; // Limit the maximum PWM value to prevent saturation
 
 void send_pwm_signal(double pwm_value_yaw, double pwm_value_pitch)
 {
@@ -47,21 +52,28 @@ void read_encoder_values(void)
     uint32_t encoder_values = read_bus();
     uint16_t yaw_count = (encoder_values >> 16) & 0xFFFFu;
     uint16_t pitch_count = encoder_values & 0xFFFFu;
-    int16_t yaw_diff = prev_yaw_count - yaw_count;
-    int16_t pitch_diff = prev_pitch_count - pitch_count;
+
+    // Use int32_t for the diff to avoid overflow during subtraction
+    int32_t yaw_diff_temp = (int32_t)prev_yaw_count - (int32_t)yaw_count;
+    int32_t pitch_diff_temp = (int32_t)prev_pitch_count - (int32_t)pitch_count;
+
+    // Correct wraparound handling using INT16_MAX and INT16_MIN
+    if (yaw_diff_temp > INT16_MAX)
+        yaw_diff_temp -= UINT16_MAX + 1; // or (1 << 16) which is more efficient
+    else if (yaw_diff_temp < INT16_MIN)
+        yaw_diff_temp += UINT16_MAX + 1; // or (1 << 16)
+
+    if (pitch_diff_temp > INT16_MAX)
+        pitch_diff_temp -= UINT16_MAX + 1; // or (1 << 16)
+    else if (pitch_diff_temp < INT16_MIN)
+        pitch_diff_temp += UINT16_MAX + 1; // or (1 << 16)
+
+    // Cast back to int16_t after wraparound correction
+    int16_t yaw_diff = (int16_t)yaw_diff_temp;
+    int16_t pitch_diff = (int16_t)pitch_diff_temp;
 
     prev_yaw_count = yaw_count;
     prev_pitch_count = pitch_count;
-
-    if (yaw_diff > UINT16_MAX / 2)
-        yaw_diff -= UINT16_MAX;
-    else if (yaw_diff < -UINT16_MAX / 2)
-        yaw_diff += UINT16_MAX;
-
-    if (pitch_diff > UINT16_MAX / 2)
-        pitch_diff -= UINT16_MAX;
-    else if (pitch_diff < -UINT16_MAX / 2)
-        pitch_diff += UINT16_MAX;
 
     unwrapped_yaw_count += yaw_diff;
     unwrapped_pitch_count += pitch_diff;
@@ -175,15 +187,31 @@ int main(void)
 
     // Prepare fixed timestep sleep
     struct timespec ts;
-    double dt = pan_xx_step_size; // might not work, so change to 0.01 if needed
+    double dt = 0.01; // might not work, so change to 0.01 if needed
     ts.tv_sec = (time_t)dt;
     ts.tv_nsec = (long)((dt - ts.tv_sec) * 1e9);
 
     printf("\nStarting real-time control loop (Ctrl+C to stop)...\n\n");
+    
+    struct timespec StartTime, next;
 
     // Real-time loop
     while (keep_running)
     {
+	    // Store start time in nanoseconds
+	    clock_gettime(CLOCK_MONOTONIC, &StartTime);
+	    printf("Start time: %ld.%09ld\n", StartTime.tv_sec, StartTime.tv_nsec);
+
+	    // Update next time step based on dt
+	    next.tv_sec = StartTime.tv_sec;
+        next.tv_nsec = StartTime.tv_nsec + dt * 1e9; // Convert dt to nanoseconds
+
+        if (next.tv_nsec >= 1000000000)
+        {
+            next.tv_sec += next.tv_nsec / 1000000000;
+            next.tv_nsec %= 1000000000;
+        }
+	
 
         int ball_x, ball_y;
         if (has_new_frame() && get_ball_position(&ball_x, &ball_y)) {
@@ -205,6 +233,8 @@ int main(void)
             double theta_z_dot_tilt = (1.0 / tau_tilt) * (desired_position_tilt - desired_position_tilt_smoothed);
             desired_position_tilt_smoothed += dt * theta_z_dot_tilt;
 
+            printf("Actual pan position: %.2f rad, Actual tilt position: %.2f rad\n",
+                   yaw_angle, pitch_angle);
             printf("Desired pan position: %.2f rad, Desired tilt position: %.2f rad\n",
                    desired_position_pan_smoothed, desired_position_tilt_smoothed);
             printf("Pan: %.2f rad, Tilt: %.2f rad, PWM Pan: %.2f, PWM Tilt: %.2f\n",
@@ -231,7 +261,7 @@ int main(void)
         
 
         // Sleep for fixed timestep
-        nanosleep(&ts, NULL);
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next, NULL);
     }
 
     // Cleanup
