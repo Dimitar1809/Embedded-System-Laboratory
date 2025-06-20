@@ -23,5 +23,7 @@
 
 void send_pwm_signal(double pwm_value_yaw, double pwm_value_pitch);
 void read_encoder_values(void);
+static inline int16_t calculate_delta_wrapped(uint16_t prev_count, uint16_t new_count);
+void position_to_angle(uint16_t x, uint16_t y, double *dx_angle, double *dy_angle);
 void home(void);
 #endif
