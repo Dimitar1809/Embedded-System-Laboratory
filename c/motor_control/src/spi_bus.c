@@ -7,10 +7,10 @@
 #include <linux/spi/spidev.h>
 #include <linux/types.h>
 
-int speed = 1000000; // Default speed
+int speed = 10000000; // Default speed
 int fd = -1;
 
-#define MAX_SPI_BUFSIZ 8192
+#define MAX_SPI_BUFSIZ 8096
 char RXBuf[MAX_SPI_BUFSIZ];
 char TXBuf[MAX_SPI_BUFSIZ];
 

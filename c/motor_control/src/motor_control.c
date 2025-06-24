@@ -6,9 +6,6 @@
 #define HFOV (45 * M_PI / 180.0) // Horizontal field of view in radians
 #define VFOV (34 * M_PI / 180.0) // Vertical field of view in radians
 
-#define TAU_PAN 1 // Time constant for pan (adjust as needed)
-#define TAU_TILT 1 // Time constant for tilt (adjust as needed)
-
 #define CONTROLLER_PERIOD 0.01 // Controller period in seconds
 #define CONTROLLER_PERIOD_NS 10000000 // 10ms in nanoseconds
 
@@ -19,20 +16,19 @@ uint16_t prev_pitch_count = UINT16_MAX;
 int16_t unwrapped_yaw_count;
 int16_t unwrapped_pitch_count;
 
-double yaw_angle;
-double pitch_angle;
+double yaw_position;
+double pitch_position;
 
 double yaw_target_position = 0.0;
 double pitch_target_position = 0.0;
 double yaw_target_position_raw = 0.0;
 double pitch_target_position_raw = 0.0;
 
-
+int ball_x, ball_y, ball_detected;
 
 void send_pwm_signal(double yaw_pwm_value, double pitch_pwm_value) 
 {
     pitch_pwm_value = pitch_pwm_value * PITCH_PWM_MULTIPLIER; // Scale pitch PWM value
-    printf("Sending PWM signal: Yaw: %.2f, Pitch: %.2f\n", yaw_pwm_value, pitch_pwm_value);
     uint16_t duty_yaw = (uint16_t)(fabs(yaw_pwm_value) * PERIOD);
     uint8_t dir_yaw;
     if (yaw_pwm_value < 0)
@@ -65,8 +61,8 @@ void read_encoder_values(void)
     unwrapped_yaw_count += yaw_delta;
     unwrapped_pitch_count += pitch_delta;
 
-    yaw_angle = unwrapped_yaw_count * YAW_RAD_PER_COUNT;
-    pitch_angle = unwrapped_pitch_count * PITCH_RAD_PER_COUNT;
+    yaw_position = unwrapped_yaw_count * YAW_RAD_PER_COUNT;
+    pitch_position = unwrapped_pitch_count * PITCH_RAD_PER_COUNT;
 
 	prev_yaw_count = yaw_count;
     prev_pitch_count = pitch_count;
@@ -86,8 +82,8 @@ void home(void)
 {
 	printf("Homing motors...\n");
 	read_encoder_values();
-	double prev_yaw_angle = yaw_angle;
-	double prev_pitch_angle = pitch_angle;
+	double prev_yaw_angle = yaw_position;
+	double prev_pitch_angle = pitch_position;
 
     send_pwm_signal(-1, -1);
     
@@ -99,13 +95,13 @@ void home(void)
     {
         read_encoder_values();
 
-		if (fabs(yaw_angle - prev_yaw_angle) < 0.001 && fabs(pitch_angle - prev_pitch_angle) < 0.001)
+		if (fabs(yaw_position - prev_yaw_angle) < 0.01 && fabs(pitch_position - prev_pitch_angle) < 0.01)
 			stable_count++;
 		else
 			stable_count = 0;
 
-        prev_yaw_angle = yaw_angle;
-        prev_pitch_angle = pitch_angle;
+        prev_yaw_angle = yaw_position;
+        prev_pitch_angle = pitch_position;
 
 		next.tv_nsec += CONTROLLER_PERIOD_NS;
         next.tv_sec  += next.tv_nsec / 1000000000;
@@ -116,8 +112,8 @@ void home(void)
 
     send_pwm_signal(0.0, 0.0);
 
-    yaw_angle = 0.0;
-    pitch_angle = 0.0;
+    yaw_position = 0.0;
+    pitch_position = 0.0;
 
     unwrapped_yaw_count = 0;
     unwrapped_pitch_count = 0;
@@ -125,13 +121,19 @@ void home(void)
     printf("Homing complete. Motors at home position.\n");
 }
 
+// clamp helper
+static inline double clamp(double v, double lo, double hi) {
+    return (v < lo) ? lo : (v > hi) ? hi : v;
+}
+
 void update_target_position(void)
 {
-	int ball_x, ball_y;
+
 	if (!has_new_frame()) {
   		return;
 	}
-	if (!get_ball_position(&ball_x, &ball_y)) {
+    ball_detected = get_ball_position(&ball_x, &ball_y);
+	if (!ball_detected) {
 		return;
  	}
 	
@@ -140,15 +142,11 @@ void update_target_position(void)
 	yaw_target_position_raw += dx_angle;
 	pitch_target_position_raw += dy_angle;
 
+
 	// Ensure desired positions are within limits
-	if (yaw_target_position_raw <  0) yaw_target_position_raw = 0;
-	if (yaw_target_position_raw > M_PI) yaw_target_position_raw = M_PI;
-	if (pitch_target_position_raw < 0) pitch_target_position_raw = 0;
-	if (pitch_target_position_raw > 2.79) pitch_target_position_raw = 2.79;
-
+	yaw_target_position_raw = clamp(yaw_target_position_raw, 0.0, M_PI);
+	pitch_target_position_raw = clamp(pitch_target_position_raw, 0.0, 2.79);
 }
-
-// …existing code…
 
 // PID gains for smoothing pan
 #define KP_PAN  5.0
@@ -159,32 +157,22 @@ void update_target_position(void)
 #define KI_TILT 0.1
 #define KD_TILT 0.5
 
-// clamp helper
-static inline double clamp(double v, double lo, double hi) {
-    return (v < lo) ? lo : (v > hi) ? hi : v;
-}
-
 void smoothen_target_position(void)
 {
-    // static states for pan
     static double pan_integral   = 0.0;
     static double pan_prev_error = 0.0;
-    // static states for tilt
     static double tilt_integral   = 0.0;
     static double tilt_prev_error = 0.0;
 
-    // compute errors
     double err_pan  = yaw_target_position_raw   - yaw_target_position;
     double err_tilt = pitch_target_position_raw - pitch_target_position;
 
-    // integrate
     pan_integral  += err_pan  * CONTROLLER_PERIOD;
     tilt_integral += err_tilt * CONTROLLER_PERIOD;
-    // (optional) clamp integrator to avoid windup:
+    
     pan_integral  = clamp(pan_integral,  -1.0, 1.0);
     tilt_integral = clamp(tilt_integral, -1.0, 1.0);
 
-    // derivative
     double d_pan  = (err_pan  - pan_prev_error)  / CONTROLLER_PERIOD;
     double d_tilt = (err_tilt - tilt_prev_error) / CONTROLLER_PERIOD;
 
@@ -196,28 +184,24 @@ void smoothen_target_position(void)
                   + KI_TILT * tilt_integral
                   + KD_TILT * d_tilt;
 
-    // update for next step
     pan_prev_error  = err_pan;
     tilt_prev_error = err_tilt;
 
-    // update smoothed positions
+    // upddate target positions
     yaw_target_position   += u_pan  * CONTROLLER_PERIOD;
     pitch_target_position += u_tilt * CONTROLLER_PERIOD;
 
-    // clamp final smoothed positions to your physical limits
+    // clamp to physical limits
     yaw_target_position   = clamp(yaw_target_position,   0.0, M_PI);
     pitch_target_position = clamp(pitch_target_position, 0.0, 2.79);
 }
-
-// …existing code…
 
 void position_to_angle(uint16_t x, uint16_t y, double *dx_angle, double *dy_angle) {
     int pixel_error_x = x - (IMAGE_WIDTH / 2); // X_CENTER is the center of the image in pixels
     int pixel_error_y = y - (IMAGE_HEIGHT / 2); // Y_CENTER is the center of the image in pixels
     double angular_error_x = (double) pixel_error_x / IMAGE_WIDTH * HFOV;
     double angular_error_y = (double) pixel_error_y / IMAGE_HEIGHT * VFOV;
-    printf("Pixel error, x: %d, y: %d\n", pixel_error_x, pixel_error_y);
-    printf("Angular error, x: %f, y: %f\n", angular_error_x, angular_error_y);
+
     *dx_angle = angular_error_x;
     *dy_angle = angular_error_y;
 }
@@ -250,27 +234,33 @@ int main(void)
     struct timespec next;
 	clock_gettime(CLOCK_MONOTONIC, &next);
 
+    int print_counter = 0;
+    const int PRINT_INTERVAL = 20; // Print every 20 iterations (200ms at 10ms per iteration)
+
+
     // Real-time loop
+    struct timespec loop_start, loop_end;
+    double min_loop_time = 1.0, max_loop_time = 0.0, total_loop_time = 0.0;
+    int loop_count = 0;
+    
     while (keep_running)
     {
-        // print time
-        printf("Current time: %ld.%09ld\n", next.tv_sec, next.tv_nsec);
-		update_target_position();
-        
-		smoothen_target_position();
+        clock_gettime(CLOCK_MONOTONIC, &loop_start);
 
-        printf("Yaw target position: %.2f rad, Pitch target position: %.2f rad\n",
-               yaw_target_position, pitch_target_position);
+        // Update target position based on image processing
+        update_target_position();
+         
+        // Smoothen the target position using PID control
+        smoothen_target_position();
 
+         // Read encoder values
         read_encoder_values();
-
-        printf("Yaw angle: %.2f rad, Pitch angle: %.2f rad\n", yaw_angle, pitch_angle);
 
         // Feed the model inputs
         pan_xx_V[7] = yaw_target_position;
-        pan_xx_V[8] = yaw_angle; // pan angle
+        pan_xx_V[8] = yaw_position; // pan angle
         tilt_xx_V[9] = pitch_target_position;
-        tilt_xx_V[10] = pitch_angle; // tilt angle
+        tilt_xx_V[10] = pitch_position; // tilt angle
 
         // One control step
         pan_XXCalculateDynamic();
@@ -281,12 +271,44 @@ int main(void)
         // Send PWM signal to motors
         send_pwm_signal(pan_xx_V[9], tilt_xx_V[11]);
 
+        clock_gettime(CLOCK_MONOTONIC, &loop_end);
+        
+        // Calculate loop execution time
+        double loop_time = (loop_end.tv_sec - loop_start.tv_sec) + 
+                          (loop_end.tv_nsec - loop_start.tv_nsec) / 1000000000.0;
+        
+        total_loop_time += loop_time;
+        loop_count++;
+        if (loop_time < min_loop_time) min_loop_time = loop_time;
+        if (loop_time > max_loop_time) max_loop_time = loop_time;
+
+        // Print status only 5 times per second (every 200ms)
+        if (++print_counter >= PRINT_INTERVAL) {
+            double avg_loop_time = total_loop_time / loop_count;
+            printf(" [Control] avg=%.4fms, min=%.4fms| ",
+                   avg_loop_time * 1000, min_loop_time * 1000);
+            printf("Yaw: pos=%.2f, target=%.2f, PWM=%.2f | "
+                   "Pitch: pos=%.2f, target=%.2f, PWM=%.2f | ",
+                   yaw_position, yaw_target_position, pan_xx_V[9],
+                   pitch_position, pitch_target_position, tilt_xx_V[11]);
+            if (ball_detected) {
+                printf("Ball (%d, %d)\n", ball_x, ball_y);
+            } else {
+                printf("No ball \n");
+            }
+            print_counter = 0;
+            
+            // Reset timing stats periodically
+            total_loop_time = 0.0;
+            loop_count = 0;
+            min_loop_time = 1.0;
+            max_loop_time = 0.0;
+        }
+
         next.tv_nsec += CONTROLLER_PERIOD_NS;
         next.tv_sec  += next.tv_nsec / 1000000000;
         next.tv_nsec %= 1000000000;
 
-        printf("\n");
-        // sleep until that time (avoids accumulating drift)
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next, NULL);
     }
 

@@ -21,8 +21,10 @@ COMMON_SOURCES = src/motor_control.c src/image_processing.c PositionControllerPa
 # Bus implementation selection (use spaces, not tabs)
 ifeq ($(BUS), spi)
     TARGET_SOURCES = src/spi_bus.c
+	CFLAGS += -DRPI4
 else ifeq ($(BUS), avalon)
     TARGET_SOURCES = src/avalon_bus.c
+	CFLAGS += -DDE10
 else ifeq ($(BUS), sim)
     TARGET_SOURCES = src/sim_bus.c
 else

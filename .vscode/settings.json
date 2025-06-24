@@ -7,7 +7,7 @@
     "files.insertFinalNewline": true,
     "editor.insertSpaces": false,
     "editor.detectIndentation": false,
-    "editor.tabSize": 8,
+    "editor.tabSize": 4,
     "[makefile]": {
         "editor.insertSpaces": false,
         "editor.detectIndentation": false

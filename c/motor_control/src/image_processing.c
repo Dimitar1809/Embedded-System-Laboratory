@@ -7,6 +7,12 @@
 #include <pthread.h>
 #include "image_processing.h"
 
+#if defined(DE10)
+	#define VIDEO_DEVICE_PATH "/dev/video7"  
+#elif defined(RPI4)
+	#define VIDEO_DEVICE_PATH "/dev/video0"
+#endif
+
 static pthread_t image_thread;
 static GMainLoop *main_loop = NULL;
 
@@ -17,6 +23,10 @@ static volatile int ball_y = -1;
 static volatile int ball_detected = 0;
 static volatile int new_frame = 0;
 static pthread_mutex_t ball_data_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static int frame_count = 0;
+static GstClockTime max_duration = GST_CLOCK_TIME_NONE;
+static GstClockTime total_duration = 0;
 
 // Simple green ball detection
 static int detect_green_ball(unsigned char *bgr_data, int width, int height, int *x, int *y)
@@ -48,6 +58,15 @@ static int detect_green_ball(unsigned char *bgr_data, int width, int height, int
     return 0;
 }
 
+// Thread save access to ball position data
+int has_new_frame()
+{
+    pthread_mutex_lock(&ball_data_mutex);
+    int result = new_frame;
+    pthread_mutex_unlock(&ball_data_mutex);
+    return result;
+}
+
 int get_ball_position(int *x, int *y)
 {
     pthread_mutex_lock(&ball_data_mutex);
@@ -62,13 +81,7 @@ int get_ball_position(int *x, int *y)
     return 0;  // No ball
 }
 
-int has_new_frame()
-{
-    pthread_mutex_lock(&ball_data_mutex);
-    int result = new_frame;
-    pthread_mutex_unlock(&ball_data_mutex);
-    return result;
-}
+
 
 /* Called whenever the GStreamer bus posts an error or EOS. */
 static gboolean
@@ -100,6 +113,7 @@ bus_call(GstBus *bus, GstMessage *msg, gpointer data)
 static GstFlowReturn
 on_new_sample(GstAppSink *appsink)
 {
+    GstClockTime start_time = gst_util_get_timestamp();
     GstSample *sample = gst_app_sink_pull_sample(appsink);
     if (!sample)
         return GST_FLOW_ERROR;  // EOS or error
@@ -123,9 +137,36 @@ on_new_sample(GstAppSink *appsink)
     new_frame = 1;
     pthread_mutex_unlock(&ball_data_mutex);
 
+    
+
     // Cleanup
     gst_buffer_unmap(buffer, &map);
     gst_sample_unref(sample);
+
+    GstClockTime end_time = gst_util_get_timestamp();
+    GstClockTime duration = end_time - start_time;
+
+    // Track maximum and accumulate total
+    if (max_duration == GST_CLOCK_TIME_NONE || duration > max_duration) {
+        max_duration = duration;
+    }
+    total_duration += duration;
+    frame_count++;
+    
+    // Print stats every 6 frames
+    if (frame_count % 6 == 0) {
+        GstClockTime avg_duration = total_duration / 6;
+        double max_ms = (double)max_duration / GST_MSECOND;
+        double avg_ms = (double)avg_duration / GST_MSECOND;
+        printf(" Time: %.3fs", (double)end_time / GST_SECOND);
+        printf(" [Image] Max: %.1fms, Avg: %.1fms", 
+               max_ms, avg_ms);
+        
+
+        // Reset for next batch
+        max_duration = GST_CLOCK_TIME_NONE;
+        total_duration = 0;
+    }
     return GST_FLOW_OK;
 }
 
@@ -156,7 +197,7 @@ static void* image_processing_thread()
 
     // 2) Configure the v4l2src and capsfilter so that we get 320×240@30fps JPEG,
     //    then decode to raw BGR via videoconvert → appsink:
-    g_object_set(src, "device", "/dev/video0", NULL);
+    g_object_set(src, "device", VIDEO_DEVICE_PATH, NULL);
 
     caps = gst_caps_from_string("image/jpeg,width=320,height=240,framerate=30/1");
     g_object_set(capfilter, "caps", caps, NULL);
